@@ -13,7 +13,7 @@ t = sdpvar(1,1); %just to be safe
 x = sdpvar(2,1);
 
 %solving parameters
-order = 2;
+order = 4;
 d = 2*order;
 
 %% Build Support Sets
@@ -44,13 +44,13 @@ X0 = struct('ineq', R0^2 - sum((x-C0).^2), 'eq', 0);
 f0 = Tmax * [x(2); -x(1)-x(2)+(x(1)^3)/3];
 f1 = Tmax * [0; x(1)];
 
-w_bound = [-0.3;0.3];
+w_bound = [-0.15;0.15];
 w_lo = w_bound(1);
 w_hi = w_bound(2);
 
 %dual constarint
 A = [1; -1];
-b = [-w_lo; w_hi];
+b = [w_lo; w_hi];
 
 
 %in line with dynamics from most recent presentation
@@ -61,7 +61,7 @@ b = [-w_lo; w_hi];
 gamma = sdpvar(1,1);
 
 %alternative polynomials
-d_altern = d+4; %figure out degree bounds later
+d_altern = 2*ceil(d/2 + degree(f1)/2); %figure out degree bounds later
 [qlo, cqlo] = polynomial([t; x], d_altern);
 [qhi, cqhi] = polynomial([t; x], d_altern);
 
@@ -73,35 +73,38 @@ coeff_list = [gamma; cv; cqlo; cqhi];
 v0 = replace(v, t, 0);
 [p0, cons0, coeff0] = constraint_psatz(gamma - v0, X0, [x], d);
 
+Xall = struct('ineq', [Tsupp.ineq; Xsupp.ineq], 'eq', []);
+
 %cost
-[pc, consc, coeffc] = constraint_psatz(v - objective, Xf, [t; x], d);
+[pc, consc, coeffc] = constraint_psatz(v - objective, Xall, [t; x], d);
 
 
 %% Dual Constraints
 
+
+
 %nonnegativity of alternative functions
-
-[plo, conslo, coefflo] = constraint_psatz(qlo, Xf, [t;x], d_altern);
-[phi, conshi, coeffhi] = constraint_psatz(q_hi - v0, Xf, [t;x], d_altern);
-
+[plo, conslo, coefflo] = constraint_psatz(qlo, Xall, [t;x], d_altern);
+[phi, conshi, coeffhi] = constraint_psatz(qhi, Xall, [t;x], d_altern);
 
 
-%lie derivative (ignore switching for now)
-Xf = struct('ineq', [Tsupp.ineq; Xsupp.ineq; Wsupp.ineq], 'eq', []);
-
-% Lv = jacobian(v, x)*(f0 + w*f1) + jacobian(v, t);
+%lie derivative constraint
 Lv0 = jacobian(v, x)*(f0) + jacobian(v, t);
 Lv1 = jacobian(v, x)*(f1);
-% [pf, consf, coefff] = constraint_psatz(-Lv, Xf, [t;x; w], d);
 
+
+[pf0, consf0, coefff0] = constraint_psatz(Lv0-b'*[qlo;qhi], Xall, [t;x], d);
+
+% consf1 = (coefficients(Lv1, cv) == coefficients(A'*[qlo; qhi], [cqlo;cqhi]));
+consf1 = (coefficients(Lv1 + A'*[qlo; qhi], [t;x])==0);
 
 %todo: replace
 
-cons = [cons0; consf; consc];
-coeff_list = [coeff_list; coeff0; coefff; coeffc];
+cons = [cons0; consc; conslo; conshi; consf0; consf1];
+coeff_list = [coeff_list; coeffc; coefflo; coeffhi; coeff0; coefff0];
 
 opts = sdpsettings('solver', 'mosek');
 opts.sos.model = 2;
 
-% [sol, monom, Gram, residual] = solvesos(cons, gamma, opts, coeff_list);
-% peak_val = value(gamma);
+[sol, monom, Gram, residual] = solvesos(cons, gamma, opts, coeff_list);
+peak_val = value(gamma)
