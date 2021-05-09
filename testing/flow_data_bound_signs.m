@@ -52,7 +52,7 @@ w_hi = w_bound(2);
 
 %dual constarint
 A = [1; -1];
-b = [w_lo; w_hi];
+b = [w_lo; -w_hi];
 
 
 %in line with dynamics from most recent presentation

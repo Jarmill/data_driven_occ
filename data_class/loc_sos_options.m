@@ -65,10 +65,10 @@ classdef loc_sos_options
         
         function obj = set_box(obj, bounding_box)
             %set bounding box for X
-            nx = length(obj.vars.x);
+            nx = length(obj.x);
             [box, box_center, box_half] = box_process(nx, bounding_box);
             
-            X_box = struct('ineq', box_half.^2 - (obj.vars.x - box_center).^2, 'eq', []);
+            X_box = struct('ineq', box_half.^2 - (obj.x - box_center).^2, 'eq', []);
             obj.X = X_box;                        
         end
         

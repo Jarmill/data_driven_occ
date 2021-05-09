@@ -1,3 +1,0 @@
-This folder contains an implementation of peak and reachable set estimation
-with polytopic uncertainty/input. The uncertainty is decomposed using the 
-faces of the polytope using convex dua
