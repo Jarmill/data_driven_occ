@@ -1,0 +1,243 @@
+classdef location_sos_interface < handle
+    %LOCATION_SOS_INTERFACE Abstract wrapper for location methods for the
+    %sum-of-squares optimization problems (in yalmip)    
+    
+    properties
+        %% properties of run
+        
+%         supp; %support set
+
+        options = [];
+        
+        vars = struct('t', [], 'x', []);
+        
+    end
+    
+    methods
+        function obj = location_sos_interface(opts)
+            %LOCATION_SOS_INTERFACE Construct an instance of this class
+            %   Detailed explanation goes here
+            obj.options = opts;
+            obj.vars = struct('t', opts.t, 'x', opts.x);
+            
+            if isempty(obj.options.t)
+                obj.options.t = sdpvar(1, 1);
+            end
+            
+        end
+        
+        %% Set up the program
+        function [prog_infeas]= make_program(obj, d)
+            [poly_var, coeff_var] = obj.make_poly(d);
+            
+            nonneg = obj.form_nonneg(poly_var);                       
+            [coeff, con] = obj.make_cons(d, poly_var);
+
+            
+            
+            [objective; coeff_obj, con_obj] = obj.get_objective(poly_var);            
+            
+%             cc_var_infeas = coef_con(coeff_var, []);
+            
+%             cc_all_infeas = [cc_var_infeas; cc_infeas];
+
+            prog_infeas = struct('nonneg', nonneg, 'poly', poly_var, ...
+                'objective', objective, 'coeff', coeff, 'con', con);
+        end
+        
+        function [poly_out, coeff_out] = make_poly(obj,d)
+            %MAKE_POLY Create polynomials v and zeta for SOS programs
+            %subclasses will define further polynomials
+            
+            t = obj.options.t;
+            x = obj.options.x;
+            [v, cv] = polynomial([t; x], d);
+
+            %The higher programs may create other variables
+            %   gamma:          peak estimation
+            %   w(x):           reachable set
+            %   gamma and w(x): distance estimation
+            %             gamma = sdpvar(1,1);
+
+            %the number of half-space constraints in the uncertainty
+            m = length(W.b);
+            
+            zeta = [];
+            coeff_zeta = [];
+            
+            d_altern = 0;
+            for i = 1:length(obj.opts.fw)
+                d_altern = max((2*ceil(d/2 + degree(obj.fw{i})/2-1)), d_altern); %figure out degree bounds later
+            end
+            
+            for i = 1:m
+                [pzeta, czeta] = polynomial([t; x], d_altern);
+                zeta = [zeta; pzeta];
+                coeff_zeta = [coeff_zeta; czeta];
+            end
+            
+            poly_out=struct('v', v, 'zeta', zeta, 't', t, 'x', x);
+            coeff_out = [cv; coeff_zeta];
+        end
+        
+        function [coeff_lie, con_lie] = make_lie_con(obj, d, poly)        
+            %make constraints for the SOS program
+            %in this interface, only perform the Lie derivative <= 0
+            %decomposition                        
+            
+            %polynomials
+            v = poly.v;
+            zeta = poly.zeta;
+            
+            %variables
+            t = obj.vars.t;
+            x = obj.vars.x;
+            
+            %uncertainty constraint Aw >= b
+
+            A = obj.W.A;
+            b = obj.W.b;
+            m = length(b);
+            
+            %region of validity [0, T] times X for dynamics
+            Xall = obj.supp.get_all_supp();
+            
+            
+            %the original constraint is that Lie v <= 0
+            %This implies that the set Lie v > 0 is empty for (t,x,w)
+            %The resultant theorem of alternatives yield a condition with
+            %Lie v - (terms) >= 0
+            %be careful of the signs
+
+            %lie derivative with no uncertainty
+            dvdx = jacobian(v, x);
+            Lv0 = dvdx*(obj.opts.f0) + jacobian(v, t);
+            
+            [pf0, consf0, coefff0] = constraint_psatz(Lv0-b'*zeta, Xall, [t;x], d);
+            
+            %output
+            coeff_lie = coefff0;
+            cons_lie = consf0;
+            
+            %terms with uncertainty
+            %these are equality constraints in polynomial coefficients
+            %TODO: implement sparsity
+            for j = 1:m
+                %current dynamics
+                Lvj = dvdx*(obj.opts.fw{j});
+                
+                %current linear constraint
+                Aj = A(j, :);
+                
+                %equality constraint
+                equal_j = Lvj + Aj'*zeta;                
+                cons_equal = (coefficients(equal_j, [t; x]) == 0);
+                cons_lie = [cons_lie; cons_equal];
+            end
+            
+            
+                        
+            %sos constraints on zeta
+            %zeta are >=0 over the dynamics support region Xall 
+            for j = 1:m
+                zeta_curr = zeta(j);
+                d_zeta = degree(zeta_curr);
+                [pzeta, conszeta, coeffzeta] = constraint_psatz(zeta_curr, Xall, [t;x], d_altern);
+                
+                coeff_lie = [coeff_lie; coeffzeta];
+                cons_lie = [cons_lie; conszeta];
+            end
+            
+            
+            %output [coeff_lie, cons_lie]
+        end
+        
+        
+        end
+        
+        
+        %% Solve the program        
+        function [out] = solve_program(obj, prog)
+            %solve SOS program in YALMIP, return solution    
+            
+            opts = sdpsettings('solver', obj.options.solver, 'verbose', obj.options.verbose);
+            opts.sos.model = 2;
+            
+            [sol, monom, Gram, residual] = solvesos(prog.cc.con, prog.objective, opts, prog.cc.coef);
+            
+            out = struct('poly', [], 'problem', sol.problem, 'sol', [], 'block', [], 'func', []);
+            if sol.problem == 0
+                %the sets X0 and X1 are disconnected in time range [0, T]
+                [out.poly, out.func] = obj.recover_poly(prog.poly, prog.nonneg);
+                out.sol = sol;   
+                out.block = struct;
+                out.block.monom = monom;
+                out.block.Gram = Gram;
+                out.block.residual = residual;                            
+            end
+        end
+        
+        
+        %% Helper functions
+        function X_cell = prep_space_cell(obj, X)
+            %PREP_SPACE_CELL: Split up X into cells
+            if iscell(X)
+                %X is already a cell, nothing to be done
+                X_cell = cell(length(X), 1);
+                for i = 1:length(X)
+                    X_cell{i} = fill_constraint(X{i});
+                end
+            else
+                if isstruct(X)
+                    %wrap up the structure in a cell
+                    X_cell = {X};
+                else
+                    %X is supported at discrete points
+                    %Each column of X is a possible origin datapoint
+                    if size(X, 2) == 1
+                        X_cell = {X};
+                    else
+                        Xt = X';
+                        Xt_cell = mat2cell(Xt, ones(size(X, 2), 1));
+                        X_cell = cellfun(@(x) x', Xt_cell, 'UniformOutput', false);
+                    end
+                end
+            end
+        end
+        
+        
+        function cc_curr = make_psatz(obj, d, X, f, vars)
+            %MAKE_PSATZ a positivestellensatz expression to impose that
+            %f(vars) >= 0 on the region X
+            if isstruct(X)
+                %X1 is a set, nonnegativity of region
+%                 set1 = true;
+                X = fill_constraint(X);
+
+                [p, cons, coeff] = constraint_psatz(f, X, vars, d);        
+            else  
+                %X is a point, nonnegativity of evaluation
+                f_pt = replace(f, vars, X);
+                cons = f_pt>= 0; 
+                coeff = [];
+            end
+            
+            cc_curr = coef_con(coeff, cons);
+        end
+        
+        
+    end
+    
+    
+    methods(Abstract)
+        recover_poly(obj, poly_var, nonneg)
+        %recover polynomials from SOS certificate
+        
+        get_objective(obj, poly_var)
+        %fetch the SOS objective to minimize
+        
+        make_cons(obj, poly)
+        %make constraints for the SOS program
+    end
+end
+

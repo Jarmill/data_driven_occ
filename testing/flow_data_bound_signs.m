@@ -4,6 +4,8 @@
 % Duality method. This is a specific instance of data-driven estimation,
 % and is distinct from the box method
 
+%the correct signs are used for the dual multipliers
+
 % for debugging purposes only
 
 %% Initiation

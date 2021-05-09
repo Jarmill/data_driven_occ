@@ -1,0 +1,24 @@
+classdef location_peak_sos < location_sos_interface
+    %LOCATION_PEAK_SOS location handle for peak estimation
+    % includes maximin objectives for safety margins
+    
+    properties
+        p; 
+    end
+    
+    methods
+        function obj = location_peak_sos(opts, p)
+            %LOCATION_PEAK_SOS Construct an instance of this class
+            %opts:  loc_sos_options data structure
+            %p:     an array of sdpvars 
+            obj.Property1 = inputArg1 + inputArg2;
+        end
+        
+        function outputArg = method1(obj,inputArg)
+            %METHOD1 Summary of this method goes here
+            %   Detailed explanation goes here
+            outputArg = obj.Property1 + inputArg;
+        end
+    end
+end
+
