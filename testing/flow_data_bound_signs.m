@@ -44,7 +44,8 @@ X0 = struct('ineq', R0^2 - sum((x-C0).^2), 'eq', 0);
 
 
 f0 = Tmax * [x(2); -x(1)-x(2)+(x(1)^3)/3];
-f1 = Tmax * [0; x(1)];
+% f1 = Tmax * [0; x(1)];
+f1 = Tmax * [3*x(1); 1];
 
 w_bound = [-0.15;0.15];
 w_lo = w_bound(1);
