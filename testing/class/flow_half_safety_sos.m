@@ -4,8 +4,8 @@ t = sdpvar(1, 1);
 x = sdpvar(2, 1);
 
 Tmax = 5;
-
-f0 = [x(2); -x(1)-x(2)+(x(1)^3)/3];
+dmax = 0.15;
+f0 = [x(2); -(1-dmax)*x(1)-x(2)+(x(1)^3)/3];
 % f1 = {[0; -0.3*x(1)]};
 
 
@@ -20,8 +20,9 @@ if NOISE == 2
 elseif NOISE == 1
 %     fw = [0; x(1)];
 %     W = struct('A', [1; -1], 'b', [-0.15; -0.15]);
-    fw = [0; -0.15*(x(1)+x(2))];
-    W = struct('A', [1; -1], 'b', [-1; -1]);
+    fw = [0; 2*dmax*x(1)];
+%     W = struct('A', [1; -1], 'b', [1; 1]);
+    W = struct('A', [1; -1], 'b', [1; 0]);
 else
     
     fw = [];
@@ -29,11 +30,16 @@ else
 end
 
 
+
+
 C0 = [1.5; 0];
 R0 = 0.4;
-
-X0 = struct('ineq', R0^2 - sum((x-C0).^2), 'eq', 0);
-
+INIT_POINT = 1;
+if INIT_POINT
+    X0 = C0;
+else
+    X0 = struct('ineq', R0^2 - sum((x-C0).^2), 'eq', 0);
+end
 
 
 %unsafe set

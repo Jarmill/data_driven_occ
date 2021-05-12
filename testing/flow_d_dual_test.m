@@ -32,10 +32,10 @@ objective = -x(2);
 C0 = [1.5; 0];
 R0 = 0.4;
 
-X0 = struct('ineq', R0^2 - sum((x-C0).^2), 'eq', 0);
+X0 = struct('ineq', R0^2 - sum((x-C0).^2), 'eq', []);
 
 %disturbance w
-Wsupp = struct('ineq', w*(1-w), 'eq', 0);
+Wsupp = struct('ineq', w*(1-w), 'eq', []);
 
 
 %dynamics
@@ -73,4 +73,4 @@ opts = sdpsettings('solver', 'mosek');
 opts.sos.model = 2;
 
 [sol, monom, Gram, residual] = solvesos(cons, gamma, opts, coeff_list);
-peak_val = value(gamma);
+peak_val = value(gamma)

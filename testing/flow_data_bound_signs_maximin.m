@@ -6,8 +6,6 @@
 
 %the correct signs are used for the dual multipliers
 
-%compare against meas_class/testing/flow_test_b
-
 % for debugging purposes only
 
 %% Initiation
@@ -33,7 +31,8 @@ box = [-1, 3; -1.5, 2];
 [bo,bc,bh]=box_process(2,box);
 Xsupp = struct('ineq', bh.^2 - (x-bc).^2, 'eq', []);
 
-objective = -x(2);
+% objective = -x(2);
+objective = -x;
 % objective = x;
 
 C0 = [1.5; 0];
@@ -89,8 +88,10 @@ v0 = replace(v, t, 0);
 Xall = struct('ineq', [Tsupp.ineq; Xsupp.ineq], 'eq', []);
 
 %cost
-[pc, consc, coeffc] = constraint_psatz(v - objective, Xall, [t; x], d);
-
+beta = sdpvar(length(objective), 1);
+[pc, consc, coeffc] = constraint_psatz(v - beta'*objective, Xall, [t; x], d);
+consc = [consc; sum(beta)==1; beta >= 0];
+coeffc = [coeffc; beta];
 
 %% Dual Constraints
 

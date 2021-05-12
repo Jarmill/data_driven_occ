@@ -98,7 +98,7 @@ classdef peak_sos < location_sos_interface
             con = [];
             
             
-            if isempty(poly.beta)
+            if isempty(poly.beta) || (length(obj.p)==1) %should be equivalent
                 %only one objective
                 term_pos = poly.v - obj.p;
                 con_beta = [];

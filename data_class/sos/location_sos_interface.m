@@ -75,9 +75,9 @@ classdef location_sos_interface < handle
             if ~isempty(obj.opts.W)
 
                 m = length(obj.opts.W.b);
-                d_altern = 0;
+                d_altern = d;
                 for i = 1:size(obj.opts.fw, 1)
-                    d_altern = max((2*ceil(d/2 + degree(obj.opts.fw(i, :))/2-1)), d); %figure out degree bounds later
+                    d_altern = max((2*ceil(d/2 + degree(obj.opts.fw(i, :))/2-1)), d_altern); %figure out degree bounds later
                 end
 
                 for i = 1:m
@@ -106,6 +106,8 @@ classdef location_sos_interface < handle
             
             if obj.opts.scale
                 scale_weight = obj.opts.Tmax;
+                obj.opts.f0 = replace(obj.opts.f0, t, scale_weight*t);
+                obj.opts.fw = replace(obj.opts.fw, t, scale_weight*t);
             else
                 scale_weight = 1;
             end
@@ -134,7 +136,7 @@ classdef location_sos_interface < handle
                 %there is uncertainty
                
                 
-                %uncertainty constraint Aw >= b
+                %uncertainty constraint Aw <= b
 
                 A = obj.opts.W.A;
                 b = obj.opts.W.b;
@@ -146,9 +148,13 @@ classdef location_sos_interface < handle
                     cons_lie = [];
                 else
                     Lv0 = dvdx*(scale_weight*obj.opts.f0) + jacobian(v, t);
+%                       %Aw >= b
+%                     [consf0, coefff0] =  obj.make_psatz(d, Xall, Lv0-b'*zeta, [t;x]);
 
-                    [consf0, coefff0] =  obj.make_psatz(d, Xall, Lv0-b'*zeta, [t;x]);
-%                     [pf0, consf0, coefff0] = constraint_psatz(Lv0-b'*zeta, Xall, [t;x], d);
+                    %Aw <= b
+%                     [consf0, coefff0] =  obj.make_psatz(d, Xall, Lv0+b'*zeta, [t;x]);
+                    [consf0, coefff0] =  obj.make_psatz(d, Xall, -Lv0-b'*zeta, [t;x]);
+
 
                     %output
                     coeff_lie = coefff0;
@@ -165,7 +171,11 @@ classdef location_sos_interface < handle
                     Aj = A(:, j);
 
                     %equality constraint
-                    equal_j = Lvj + Aj'*zeta;                
+%                     %Aw >= b
+%                     equal_j = Lvj + Aj'*zeta;                
+                    
+                    %Aw <= b
+                    equal_j = Lvj - Aj'*zeta;      
                     cons_equal = (coefficients(equal_j, [t; x]) == 0);
                     cons_lie = [cons_lie; cons_equal:['Lie input ', num2str(j), ' duality']];
                 end
