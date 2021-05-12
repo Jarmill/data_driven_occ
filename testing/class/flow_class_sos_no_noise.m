@@ -1,17 +1,16 @@
 
-clear
 %% Define quantities
 t = sdpvar(1, 1);
 x = sdpvar(2, 1);
 
 Tmax = 5;
-dmax = 0.15;
-f0 = [x(2); -(1-dmax)*x(1)-x(2)+(x(1)^3)/3];
+% dmax = 0.15;
+f0 = [x(2); -x(1)-x(2)+(x(1)^3)/3];
 % f1 = {[0; -0.3*x(1)]};
 
 
 %% Add noise
-NOISE = 1;
+NOISE = 0;
 if NOISE == 2
     %rows: dynamics
     %columns: number of uncertain inputs
@@ -21,7 +20,7 @@ if NOISE == 2
 elseif NOISE == 1
 %     fw = [0; x(1)];
 %     W = struct('A', [1; -1], 'b', [-0.15; -0.15]);
-    fw = [0; -2*dmax*x(1)];
+    fw = [0; 2*dmax*x(1)];
 %     W = struct('A', [1; -1], 'b', [1; 1]);
     W = struct('A', [1; -1], 'b', [1; 0]);
 else

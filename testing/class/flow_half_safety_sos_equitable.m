@@ -1,4 +1,8 @@
 
+%equitable:
+%-1 <= w <= 1
+%previously (box) 0 <= w <= 1
+
 clear
 %% Define quantities
 t = sdpvar(1, 1);
@@ -6,7 +10,7 @@ x = sdpvar(2, 1);
 
 Tmax = 5;
 dmax = 0.15;
-f0 = [x(2); -(1-dmax)*x(1)-x(2)+(x(1)^3)/3];
+f0 = [x(2); -x(1)-x(2)+(x(1)^3)/3];
 % f1 = {[0; -0.3*x(1)]};
 
 
@@ -19,11 +23,8 @@ if NOISE == 2
     fw = [0 1; x(1) 0];
     W = struct('A', kron(eye(2), [1; -1]), 'b', 0.15*[-1; -1; -10; -10]);
 elseif NOISE == 1
-%     fw = [0; x(1)];
-%     W = struct('A', [1; -1], 'b', [-0.15; -0.15]);
-    fw = [0; -2*dmax*x(1)];
-%     W = struct('A', [1; -1], 'b', [1; 1]);
-    W = struct('A', [1; -1], 'b', [1; 0]);
+    fw = [0; dmax*x(1)];
+    W = struct('A', [1; -1], 'b', [1; 1]);
 else
     
     fw = [];
