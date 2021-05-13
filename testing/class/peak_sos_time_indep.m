@@ -5,13 +5,7 @@ x = sdpvar(2, 1);
 
 Tmax = 5;
 
-POS = 0;
-dmax = 0.15;
-if POS
-    f0 = [x(2); -(1-dmax)*x(1)-x(2)+(x(1)^3)/3];
-else
-    f0 = [x(2); -x(1)-x(2)+(x(1)^3)/3];
-end
+f0 = [x(2); -x(1)-x(2)+(x(1)^3)/3];
 % f0 = [2*x(1); - x(2)];
 % f0 = [0; -1];
 
@@ -27,15 +21,8 @@ if NOISE == 2
     fw = [0 1; x(1) 0];
     W = struct('A', kron(eye(2), [1; -1]), 'b', 0.15*[-1; -1; -10; -10]);
 elseif NOISE == 1
-    if POS
-        fw = [0; -2*dmax*x(1)];
-        W = struct('A', [1; -1], 'b', [1; 0]);
-    else
-%         fw = [0; dmax*x(1)];
-%         W = struct('A', [1; -1], 'b', [1; 1]);
-        fw = [0; x(1)];
-        W = struct('A', [1; -1], 'b', dmax*[1; 1]);
-    end
+    fw = [0; x(1)];
+    W = struct('A', [1; -1], 'b', [0.15; -0.15]);
 else
     fw = [];
     W = [];
@@ -43,17 +30,17 @@ end
 
 
 C0 = [1.5; 0];
-R0 = 0.4;
-% R0 = 0.3;
+% R0 = 0.4;
+R0 = 0.3;
 
-X0 = struct('ineq', R0^2 - sum((x-C0).^2), 'eq', []);
+X0 = struct('ineq', R0^2 - sum((x-C0).^2), 'eq', 0);
 
 objective = -x(2);
 % objective = -x;
 
 %% fill in location support
 lsupp = loc_sos_options();
-lsupp.t = t;
+lsupp.TIME_INDEP = 1;
 lsupp.x = x;
 lsupp = lsupp.set_box([-1, 3; -1.5, 2]);
 lsupp.X_init = X0;

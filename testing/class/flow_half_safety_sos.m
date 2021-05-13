@@ -44,7 +44,7 @@ end
 
 C0 = [1.5; 0];
 R0 = 0.4;
-INIT_POINT = 1;
+INIT_POINT = 0;
 if INIT_POINT
     X0 = C0;
 else

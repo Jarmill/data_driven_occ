@@ -9,7 +9,8 @@ classdef loc_sos_options
         
         %% properties of run
         %terminal time   
-        Tmax(1,1) double{mustBePositive}  = 5;           
+        Tmax(1,1) double{mustBePositive}  = 5;   
+        TIME_INDEP = 0; %formulation independent of time
         
         %% Variables and descriptors
         %variables defining sets (array of symbolic variables)
@@ -23,6 +24,8 @@ classdef loc_sos_options
         X = [];         %valid set
         X_init = [];    %initial set
         X_term = [];    %terminal set
+        
+        box = [];       %bounding box
         
         solver = 'mosek';
         
@@ -56,11 +59,30 @@ classdef loc_sos_options
             Xsupp = obj.X;
         end
         
+        function Xsupp = get_X_init(obj)
+            Xsupp = obj.X_init;
+            if isempty(Xsupp)
+                Xsupp = obj.get_X();
+            end
+        end
+        
+        function Xsupp = get_X_term(obj)
+            Xsupp = obj.X_term;
+            if isempty(Xsupp)
+                Xsupp = obj.get_X();
+            end
+        end
+        
         function allsupp = get_all_supp(obj)
-            Tsupp = obj.get_t_supp();
-            Xsupp = obj.get_X();
             
-            allsupp = struct('ineq', [Tsupp.ineq; Xsupp.ineq], 'eq', Xsupp.eq);
+            if obj.TIME_INDEP
+                allsupp = obj.get_X();
+            else
+                Tsupp = obj.get_t_supp();
+                Xsupp = obj.get_X();
+            
+                allsupp = struct('ineq', [Tsupp.ineq; Xsupp.ineq], 'eq', Xsupp.eq);
+            end
         end
         
         function obj = set_box(obj, bounding_box)
@@ -70,6 +92,7 @@ classdef loc_sos_options
             
             X_box = struct('ineq', box_half.^2 - (obj.x - box_center).^2, 'eq', []);
             obj.X = X_box;                        
+            obj.box = box;
         end
         
 %         function W = bounded_noise(t, x, epsilon)
