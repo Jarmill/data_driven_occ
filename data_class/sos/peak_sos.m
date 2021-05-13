@@ -41,27 +41,28 @@ classdef peak_sos < location_sos_interface
             
         end
         
-        function [coeff, con] = make_cons(obj, d, poly)
+        function [coeff, con, nonneg] = make_cons(obj, d, poly)
             %METHOD1 Summary of this method goes here
             %   Detailed explanation goes here
             
             %lie derivative constraint
-            [coeff_lie, con_lie] = obj.make_lie_con(d, poly);
+            [coeff_lie, con_lie, nonneg_lie] = obj.make_lie_con(d, poly);
             
             
             %objective constraint (terminal)
-            [coeff_term, con_term] = obj.make_term_con(d, poly);
+            [coeff_term, con_term, nonneg_term] = obj.make_term_con(d, poly);
             
             %initial constraint in v0
-            [coeff_init, con_init] = obj.make_init_con(d, poly);
+            [coeff_init, con_init, nonneg_init] = obj.make_init_con(d, poly);
             
             
             %package up the constraints
             coeff = [coeff_lie; coeff_term; coeff_init];
             con = [con_lie; con_term; con_init];
+            nonneg = [nonneg_init; nonneg_term; nonneg_lie];
         end
         
-        function [coeff, con] = make_init_con(obj, d, poly)
+        function [coeff, con, nonneg] = make_init_con(obj, d, poly)
             %Constraint on initial measure
             %auxiliary function v(t,x) upper bounded by gamma
             
@@ -69,7 +70,7 @@ classdef peak_sos < location_sos_interface
             
             coeff = [];
             con = [];
-            
+            nonneg = [];
             init_pos = poly.gamma - poly.v0;
             for i = 1:length(X0)
                 [con_curr, coeff_curr] = obj.make_psatz(d, X0{i}, init_pos, poly.x);
@@ -82,10 +83,15 @@ classdef peak_sos < location_sos_interface
                 
                 coeff = [coeff; coeff_curr];
                 con   = [con; con_curr:init_tag];
+%                 nonneg = [nonneg; init_pos];
+
+                %the nonnegative function should hold for all time
+                nonneg = [nonneg; poly.gamma - poly.v];
             end
+            
         end
         
-        function [coeff, con] = make_term_con(obj, d, poly)
+        function [coeff, con, nonneg] = make_term_con(obj, d, poly)
             %Constraint on terminal measure
             %auxiliary function v(t, x) upper bounds objective beta'p(x)
             
@@ -112,6 +118,7 @@ classdef peak_sos < location_sos_interface
             coeff = [coeff_term];
             con = [con_term:'peak'; con_beta];
             
+            nonneg = term_pos;
         end
         
         
@@ -127,6 +134,30 @@ classdef peak_sos < location_sos_interface
             
             poly_val.gamma = value(poly_var.gamma);
             poly_val.beta = value(poly_var.beta);
+        end
+        
+        function dynamics = package_dynamics(obj, func_in)
+            %package up dynamics for use in the (old) sampler
+            %peak/sampler
+            dynamics = package_dynamics@location_sos_interface(obj, func_in);
+            
+            %call the cost
+            p_handle = polyval_func(obj.p, obj.vars.x);
+            
+            %minimize in case of maximin objective (multiple costs)
+            dynamics.cost = @(x) min(p_handle(x));
+            
+        end
+        
+        function [out] = solve_program(obj, prog)
+            out = solve_program@location_sos_interface(obj, prog);
+            out.peak_val = out.obj;
+            out.optimal = 0;
+            
+            out.var = struct;
+            out.var.t = obj.vars.t;
+            out.var.x = obj.vars.x;
+            out.var.w = [];
         end
         
     end

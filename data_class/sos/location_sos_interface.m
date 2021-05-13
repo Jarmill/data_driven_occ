@@ -38,7 +38,9 @@ classdef location_sos_interface < handle
             [poly_var, coeff_var] = obj.make_poly(d);
             
 %             nonneg = obj.form_nonneg(poly_var);                       
-            [coeff, con] = obj.make_cons(d, poly_var);           
+            [coeff, con, nonneg] = obj.make_cons(d, poly_var);    
+            
+            poly_var.nonneg = nonneg;
             
             [objective] = obj.get_objective(poly_var);            
             
@@ -46,7 +48,8 @@ classdef location_sos_interface < handle
             coeff = [coeff_var; coeff];
             
             prog = struct('poly', poly_var, ...
-                'objective', objective, 'coeff', coeff, 'con', con);
+                'objective', objective, 'coeff', coeff, 'con', con,... 
+                'order', d/2);
         end
         
         function [poly_out, coeff_out] = make_poly(obj,d)
@@ -91,7 +94,7 @@ classdef location_sos_interface < handle
             coeff_out = [cv; coeff_zeta];
         end
         
-        function [coeff_lie, cons_lie] = make_lie_con(obj, d, poly)        
+        function [coeff_lie, cons_lie, nonneg_lie] = make_lie_con(obj, d, poly)        
             %make constraints for the SOS program
             %in this interface, only perform the Lie derivative <= 0
             %decomposition                        
@@ -132,6 +135,8 @@ classdef location_sos_interface < handle
                 [cons_lie, coeff_lie] =  obj.make_psatz(d, Xall, -Lv0, [t;x]);
 %                 constraint_psatz(-Lv0, Xall, [t;x], d);
                 cons_lie = cons_lie:'Lie standard (no input)';
+                
+                nonneg_lie = -Lv0;
             else
                 %there is uncertainty
                
@@ -146,6 +151,7 @@ classdef location_sos_interface < handle
                 if isempty(obj.opts.f0)
                     coeff_lie = [];
                     cons_lie = [];
+                    nonneg_lie = [];
                 else
                     Lv0 = dvdx*(scale_weight*obj.opts.f0) + jacobian(v, t);
 %                       %Aw >= b
@@ -159,6 +165,7 @@ classdef location_sos_interface < handle
                     %output
                     coeff_lie = coefff0;
                     cons_lie = consf0:'Lie base duality';
+                    nonneg_lie = -Lv0 - b'*zeta;
                 end
                 %terms with uncertainty
                 %these are equality constraints in polynomial coefficients
@@ -193,6 +200,7 @@ classdef location_sos_interface < handle
 
                     coeff_lie = [coeff_lie; coeffzeta];
                     cons_lie = [cons_lie; conszeta:['zeta ', num2str(j), ' sos']];
+                    nonneg_lie = [nonneg_lie; zeta_curr];
                 end
             end
             
@@ -222,7 +230,11 @@ classdef location_sos_interface < handle
                 out.block.Gram = Gram;
                 out.block.residual = residual;     
                 out.obj = value(prog.objective);
+                out.order = prog.order;                
+                
             end
+            
+            out.dynamics = obj.package_dynamics(out.func);
         end
         
         
@@ -233,7 +245,8 @@ classdef location_sos_interface < handle
             out= solve_program(obj, prog);
         end
         
-        function [poly_eval, func_eval] = recover_poly(obj, poly_var)
+        %% Recover from the solution
+        function [poly_eval, func_eval] = recover_poly(obj, poly_var, nonneg)
         %recover polynomials from SOS certificate
         
             t = poly_var.t;
@@ -242,14 +255,17 @@ classdef location_sos_interface < handle
             
             %solved coefficients of v and zeta
             [cv,mv] = coefficients(poly_var.v,[poly_var.t; poly_var.x]);
-            v_eval = value(cv)'*mv;
-
+            v_eval = value(cv)'*mv;                                   
+            v_eval = replace(v_eval, poly_var.t, poly_var.t/obj.opts.Tmax);
+            %remember to scale by time 
+            
             [cz, mz] = coefficients(poly_var.zeta,[poly_var.t; poly_var.x]);
             if n == 1
                 zeta_eval = value(cz)'*mz;
             else
                 zeta_eval = value(cz)*mz;
             end
+            zeta_eval = replace(zeta_eval, poly_var.t, poly_var.t/obj.opts.Tmax);
             
             %evaluations of v at initial and terminal times
             v0 = replace(v_eval, t, 0);            
@@ -260,16 +276,58 @@ classdef location_sos_interface < handle
 %             else
 %                 v1 = replace(v_eval, t, obj.opts.Tmax);
 %             end
+
+            %nonnegative evaluation
+            [cnn,mnn] = coefficients(poly_var.nonneg,[poly_var.t; poly_var.x]);
+            nn_eval = value(cnn)*mnn;
+            nn_eval = replace(nn_eval, poly_var.t, poly_var.t/obj.opts.Tmax);
+
                         
-            poly_eval = struct('v', v_eval, 'zeta', zeta_eval, 'v0', v0);
+            poly_eval = struct('v', v_eval, 'zeta', zeta_eval, 'v0', v0, 'nonneg', nn_eval);
             
             % form functions using helper function 'polyval_func'
             func_eval = struct;
             func_eval.v = polyval_func(v_eval, [t; x]);
             func_eval.zeta = polyval_func(zeta_eval, [t; x]);
             
-            func_eval.v0 = polyval_func(v0, [x]);            
-    end
+%             func_eval.v0 = polyval_func(v0, [x]);            
+            func_eval.nonneg = polyval_func(nn_eval, [t;x]);            
+        end
+    
+        function dynamics = package_dynamics(obj, func_in)
+            %package up dynamics for use in the (old) sampler
+            %peak/sampler
+            
+            
+            dynamics = struct('Tmax', obj.opts.Tmax, 'discrete', 0);
+            
+            %TODO: replace with time independence
+            dynamics.time_indep = 0;
+            %iterate through points array and evaluate nonnegative
+            %functions
+            dynamics.nonneg_val = func_in.nonneg;
+            %truly terrible code
+            %evaluate nonnegative functions at each point [t, x]
+            %functional design pattern
+            dynamics.nonneg = @(t,x,w,d) cell2mat(arrayfun(@(i) dynamics.nonneg_val([t(i); x(:, i)]),(1:length(t)), 'UniformOutput', false))';
+            
+            
+            
+            %This is old sampler code as a kludge. 
+            
+            %event handle
+            dynamics.Xval = constraint_func(obj.opts.X, obj.vars.x);
+            dynamics.event = {@(t,x,w) support_event(t, x, dynamics.Xval, ...
+                0, obj.opts.Tmax)};
+            
+            
+            %dynamics handle (time-varying polytopic uncertainty called 'd'
+            %here)
+            dynamics.f0= polyval_func(obj.opts.f0, [obj.vars.t; obj.vars.x]);
+            dynamics.fw = polyval_func(obj.opts.fw, [obj.vars.t; obj.vars.x]);
+            dynamics.f = {@(t,x,w,d,b) dynamics.f0([t; x]) + dynamics.fw([t; x])*d};
+            
+        end
         
         %% Helper functions
         function X_cell = prep_space_cell(obj, X)
@@ -315,8 +373,7 @@ classdef location_sos_interface < handle
                 coeff = [];
             end
             
-        end
-        
+        end                                
         
     end
     
