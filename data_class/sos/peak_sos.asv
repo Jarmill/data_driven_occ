@@ -138,7 +138,7 @@ classdef peak_sos < location_sos_interface
             
             %call the cost
             func_eval.cost_all= polyval_func(obj.p, obj.vars.x);
-            func_eval.cost = @(x) min(func_eval.cost_all(x));
+            func_eval.cost = @(x) min(func_eval_cost(x));
         end
         
         function dynamics = package_dynamics(obj, func_in)

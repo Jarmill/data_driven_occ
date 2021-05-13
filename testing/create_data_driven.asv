@@ -51,14 +51,12 @@ b_w_signed = [epsilon + b_w; epsilon - b_w];
 
 %% manipulate center
 
-% b_cheb_pos = b_w + epsilon - A_w*c;
-% b_cheb_neg = b_w - epsilon - A_w*c;
-% b_cheb_stack = [b_cheb_pos b_cheb_neg];
-b_w_cheb = [epsilon + b_w - A_w*c; epsilon - b_w + A_w*c];
+b_cheb_pos = b_w + epsilon - A_w*c;
+b_cheb_neg = b_w - epsilon - A_w*c;
+b_cheb_stack = [b_cheb_pos b_cheb_neg];
 
-[V_cheb]=lcon2vert(A_w_signed ,b_w_cheb,[],[]);
 
-box_cheb = poly_bounding_box(A_w_signed ,b_w_cheb);
+
 % b_w_cheb = b_w_signed - kron([1; -1], A_w*c);
 
 

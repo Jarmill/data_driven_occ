@@ -323,11 +323,11 @@ classdef location_sos_interface < handle
             dynamics.time_indep = 0;
             %iterate through points array and evaluate nonnegative
             %functions
-            dynamics.nonneg_val = func_in.nonneg;
+%             dynamics.nonneg_val = func_in.nonneg;
             %truly terrible code
             %evaluate nonnegative functions at each point [t, x]
             %functional design pattern
-            dynamics.nonneg = @(t,x,w,d) cell2mat(arrayfun(@(i) dynamics.nonneg_val([t(i); x(:, i)]),(1:length(t)), 'UniformOutput', false))';
+%             dynamics.nonneg = @(t,x,w,d) cell2mat(arrayfun(@(i) dynamics.nonneg_val([t(i); x(:, i)]),(1:length(t)), 'UniformOutput', false))';
             
             
             
@@ -391,7 +391,7 @@ classdef location_sos_interface < handle
                 coeff = [];
             end
             
-        end                                
+        end                                                        
         
     end
     

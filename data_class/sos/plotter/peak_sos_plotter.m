@@ -2,22 +2,20 @@ classdef peak_sos_plotter < plotter_sos_interface
     %PEAK_SOS_PLOTTER Summary of this class goes here
     %   Detailed explanation goes here
     
-    properties
-        Property1
-    end
+    
     
     methods
-        function obj = peak_sos_plotter(manager, out_sim)
+        function obj = peak_sos_plotter(out, out_sim)
             %PEAK_SOS_PLOTTER Construct an instance of this class
             %   Detailed explanation goes here
-            obj = obj@plotter_sos_interface(manager, out_sim);
+            obj = obj@plotter_sos_interface(out, out_sim);
         end
         
         function F = nonneg_traj(obj)
 
             F = figure(20);
             
-            N0 = length(obj.manager.opts.get_X_init());
+%             N0 = length(obj.manager.opts.get_X_init());
             
             %no other switching present, so there is only one system for
             %the occupation measure
@@ -33,9 +31,11 @@ classdef peak_sos_plotter < plotter_sos_interface
                 for j = 1:length(obj.out_sim)
                     osc = obj.out_sim{j};                    
                     if i == 1
-                        plot(osc.t, osc.nonneg(1:N0, :), 'c');
+                        plot(osc.t, osc.nonneg(1:(end-2), :), 'c');
+                    elseif i==2
+                        plot(osc.t, osc.nonneg(end-1, :), 'c');
                     else
-                        plot(osc.t, osc.nonneg(N0+i-1, :), 'c');
+                        plot(osc.t, osc.nonneg(end, :), 'c');
                     end
                 end
                 xlabel('time', 'FontSize', obj.FS_axis)

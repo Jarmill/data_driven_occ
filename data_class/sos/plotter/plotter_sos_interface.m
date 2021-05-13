@@ -6,20 +6,28 @@ classdef plotter_sos_interface < handle
         FS_axis = 14;       %font size of axis
         FS_title = 16;      %font size of title1
         
-        manager;
+        
     end
     
     properties(Access=protected)
-        out_sim;
+        out;            %result of optimization
+        out_sim;        %trajectories
     end
     
     methods
-        function obj = plotter_sos_interface(manager, out_sim)
+        function obj = plotter_sos_interface(out, out_sim)
             %UNTITLED Construct an instance of this class
             %   Detailed explanation goes here
 %             obj.Property1 = inputArg1 + inputArg2;
-            obj.manager = manager;
+            obj.out = out;
             obj.out_sim = out_sim;
+            
+            
+        end
+        
+        function F = cost_plot(obj)
+            %TODO: fill this in
+            F = 0;
         end
         
         function F = state_plot(obj)
@@ -30,7 +38,7 @@ classdef plotter_sos_interface < handle
             ax = cell(nplt, 1);
             for k = 1:nplt
                 ax{k} = nexttile;
-                title(['State ', num2str(k), ' vs. Time'], obj.FS_title);   
+                title(['State ', num2str(k), ' vs. Time'], 'FontSize', obj.FS_title);   
                 ax_loc_curr = ['$x_', num2str(k), '$'];
                 xlabel('time', 'FontSize', obj.FS_axis)
                 ylabel(ax_loc_curr , 'interpreter', 'latex', 'FontSize', obj.FS_axis);
@@ -59,7 +67,7 @@ classdef plotter_sos_interface < handle
             %plot the nonnegative slack functions zeta
             F = figure(21);
             
-            Nzeta = length(obj.manager.opts.W.b);
+            Nzeta = length(obj.out.poly.zeta);
             tiledlayout(Nzeta, 1);
             for i = 1:Nzeta
                 nexttile
