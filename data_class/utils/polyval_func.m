@@ -21,8 +21,24 @@ function pfunc = polyval_func(poly, vars)
         for i = 1:length(vars)
             varnames_new{i} = ['varnew(', num2str(i), ')'];
         end
-
-        sjoin = ['[', sprintf('%s; ',s{1:end-1}),s{end}, ']'];
+        
+        sjoin = '[';
+        [m, n] = size(s);
+        for i = 1:m
+            for j = 1:n
+                if j==n
+                    if i==m
+                        sjoin = [sjoin, sprintf('%s ',s{i, j})];
+                    else
+                        sjoin = [sjoin, sprintf('%s; ',s{i, j})];
+                    end
+                else
+                    sjoin = [sjoin, sprintf('%s, ',s{i, j})];
+                end
+            end            
+        end
+        sjoin = [sjoin, ']'];
+%         sjoin = ['[', sprintf('%s; ',s{1:end-1}),s{end}, ']'];
         var_pre = '@(varnew) ';
         sjoin_old = sjoin;
         

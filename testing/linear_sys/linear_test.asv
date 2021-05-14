@@ -1,0 +1,57 @@
+%data driven peak estimation of a linear system
+
+
+rng(33, 'twister')
+%% generate samples
+A_true = [-1 3; -1 -0.3];
+f_true = @(t, x) A_true*x;
+
+Nsample = 40;
+box_lim = 3;
+
+epsilon = 2;
+sample = struct('t', 4, 'x', @() 3*(2*rand(2,1)-1));
+
+[observed] = corrupt_observations(Nsample,sample, f_true, epsilon);
+
+%% generate model
+t = sdpvar(1, 1);
+x = sdpvar(2, 1);
+
+dmin = 1;
+dmax = 1;
+nx = 2;
+f0 = zeros(nx, 2);
+fw = kron(eye(nx), monolist(x, dmin, dmax)');
+sdisplay(fw)
+
+
+%% create observation constraints Aw <= b
+f0_func = polyval_func(f0, [t;x]);
+fw_func = polyval_func(fw, [t;x]);
+
+nw = size(fw, 2);   %number of uncertainties
+m = nx*Nsample*2;   %number of constraints
+A = zeros(m, nw);
+b = zeros(m, 1);
+
+counter = 0;
+for i = 1:Nsample
+    tcurr = observed.t(i);
+    xcurr = observed.x(:, i);
+    
+    f0_curr = f0_func([tcurr; xcurr]);
+    fw_curr = fw_func([tcurr; xcurr]);
+    
+    b_pos_curr = epsilon - f0_curr;
+    b_neg_curr = epsilon + f0_curr;
+    
+    
+    b(counte
+    counter = counter + 2*nx;
+end
+
+
+ 
+
+
