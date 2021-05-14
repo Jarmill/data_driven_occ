@@ -14,13 +14,13 @@ classdef peak_sos_plotter < plotter_sos_interface
         function F = nonneg_traj(obj)
 
             F = figure(20);
-            
+            clf
 %             N0 = length(obj.manager.opts.get_X_init());
             
             %no other switching present, so there is only one system for
             %the occupation measure
             
-            ax_label= {'$\gamma - v(t,x)$', '$v(x) - \beta^T p(x)$', '$-L_{f0} v(t,x) - b^T \zeta(t,x)$'};
+            ax_label= {'$\gamma - v(t,x)$', '$v(t,x) - \beta^T p(x)$', '$-L_{f0} v(t,x) - b^T \zeta(t,x)$'};
             ax_title = {'Bounded v (initial)', 'Dominating cost (peak)', 'Decreasing v (occupation)'};
             
             tiledlayout(3, 1);
@@ -49,6 +49,7 @@ classdef peak_sos_plotter < plotter_sos_interface
         function F = cost_plot(obj)
 
             F = figure(23);
+            clf
             hold on
             for j = 1:length(obj.out_sim)
                 osc = obj.out_sim{j};                    

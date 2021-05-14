@@ -28,7 +28,7 @@ classdef plotter_sos_interface < handle
         function F = v_plot(obj)
 
             F = figure(18);
-            clf
+            
             subplot(2, 1, 1)
             hold on
 
@@ -82,7 +82,6 @@ classdef plotter_sos_interface < handle
         
         function F = state_plot_2(obj)
             F = figure(30);
-            clf
             hold on 
             for i = 1:length(obj.out_sim)
                 tcurr = obj.out_sim{i}.t;
@@ -95,15 +94,13 @@ classdef plotter_sos_interface < handle
                 scatter(xcurr(1, 1), xcurr(1, 2), 100, 'k')
             end
             
-            xlabel('$x_1$', 'interpreter', 'latex', 'FontSize', obj.FS_axis);
-            ylabel('$x_2$', 'interpreter', 'latex', 'FontSize', obj.FS_axis);
-            title('Phase Plane', 'FontSize', obj.FS_title);   
-            
+            xlabel('x_1')
+            ylabel('x_2')
             
             %implicit curves
             syms y [2, 1];
-            cy = obj.out.func.cost(y) - obj.out.obj;
-            fimplicit(cy + 1e-8*sum(y), [xlim, ylim],  '--r', 'HandleVisibility', 'Off', 'LineWidth', 2)
+%             cy = 
+        
         end
  
         

@@ -2,9 +2,9 @@
 
 %break up the sections here into functions
 
-PROBLEM = 1;
-SOLVE = 1;
-SAMPLE = 1;
+PROBLEM = 0;
+SOLVE = 0;
+SAMPLE = 0;
 PLOT = 1;
 
 if PROBLEM
@@ -15,12 +15,14 @@ A_true = [-1 3; -1 -0.3];
 f_true = @(t, x) A_true*x;
 
 % Nsample = 50;
-Nsample = 20;
+Nsample = 40;
+% Nsample = 30;
+% Nsample = 20;
 % Nsample = 4;
 box_lim = 2;
 Tmax = 5;
-% epsilon = 2;
-epsilon = 1;
+epsilon = 2;
+% epsilon = 1;
 sample = struct('t', Tmax, 'x', @() box_lim*(2*rand(2,1)-1));
 
 [observed] = corrupt_observations(Nsample,sample, f_true, epsilon);
@@ -112,7 +114,7 @@ if SOLVE
 
     C0 = [0; 0.5];
     R0 = 0.2;
-    INIT_POINT = 0;
+    INIT_POINT = 1;
     if INIT_POINT
         X0 = C0;
     else
@@ -140,7 +142,7 @@ if SOLVE
     %% start up tester
     PM = peak_sos(lsupp, objective);
 
-    order = 2;
+    order = 3;
     d = 2*order;
 
     % [prog]= PM.make_program(d);
@@ -162,10 +164,12 @@ if SAMPLE
     s_opt.Nd = nw;
     
     s_opt.Tmax = lsupp.Tmax;
-    s_opt.parallel = 0;
+    s_opt.parallel = 1;
+    
+    Nsample_traj = 100;
     
     tic
-    out_sim = sampler(out.dynamics, Nsample, s_opt);
+    out_sim = sampler(out.dynamics, Nsample_traj, s_opt);
 
     out_sim = traj_eval(out, out_sim);
 
@@ -183,5 +187,18 @@ if PLOT
     PS.state_plot();
     PS.nonneg_traj();
     
+    PS.state_plot_2();
+    
+    %observation plot
+    figure(2)
+    clf
+    hold on
+    quiver(observed.x(1, :), observed.x(2, :), observed.xdot_true(1, :), observed.xdot_true(2, :))
+    quiver(observed.x(1, :), observed.x(2, :), observed.xdot_noise(1, :), observed.xdot_noise(2, :))
+    axis square
+    xlabel('$x_1$', 'interpreter', 'latex', 'FontSize', PS.FS_axis);
+    ylabel('$x_2$', 'interpreter', 'latex', 'FontSize', PS.FS_axis);          
+    title(['Noisy Observations with \epsilon=', num2str(epsilon)], 'FontSize', PS.FS_title)
+
 end
 
