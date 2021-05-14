@@ -45,6 +45,20 @@ classdef peak_sos_plotter < plotter_sos_interface
             end
         end
 
+        function F = state_plot_2(obj, box_lim)
+            if nargin == 1
+                box_lim = [];
+            end
+            
+            [F, limits] = state_plot_2@plotter_sos_interface(obj, box_lim);
+            
+            
+            %implicit curves
+            syms y [2, 1];
+            cy = obj.out.func.cost(y) - obj.out.obj;
+            fimplicit(cy + 1e-8*sum(y), limits,  '--r', 'HandleVisibility', 'Off', 'LineWidth', 2)
+        end
+        
         
         function F = cost_plot(obj)
 

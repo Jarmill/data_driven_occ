@@ -80,7 +80,7 @@ classdef plotter_sos_interface < handle
             
         end
         
-        function F = state_plot_2(obj)
+        function [F, limits] = state_plot_2(obj, box_lim)
             F = figure(30);
             clf
             hold on 
@@ -93,17 +93,24 @@ classdef plotter_sos_interface < handle
                 tcurr = obj.out_sim{i}.t;
                 xcurr = obj.out_sim{i}.x;
                 scatter(xcurr(1, 1), xcurr(1, 2), 100, 'k')
-            end
+            end                        
             
             xlabel('$x_1$', 'interpreter', 'latex', 'FontSize', obj.FS_axis);
             ylabel('$x_2$', 'interpreter', 'latex', 'FontSize', obj.FS_axis);
             title('Phase Plane', 'FontSize', obj.FS_title);   
             
             
-            %implicit curves
-            syms y [2, 1];
-            cy = obj.out.func.cost(y) - obj.out.obj;
-            fimplicit(cy + 1e-8*sum(y), [xlim, ylim],  '--r', 'HandleVisibility', 'Off', 'LineWidth', 2)
+            if (nargin == 2 ) && ~isempty(box_lim)
+                box = box_process(2, box_lim);
+                xlim(box(1, :));
+                ylim(box(2, :));
+                limits = [box(1, :), box(2, :)];
+            else
+                limits = [xlim, ylim];
+            end
+            
+            pbaspect([diff(xlim), diff(ylim), 1])
+            
         end
  
         
