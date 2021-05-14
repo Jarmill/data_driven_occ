@@ -125,6 +125,10 @@ classdef peak_sos < location_sos_interface
         function objective = get_objective(obj, poly_var)
             %fetch the SOS objective to minimize
             objective = poly_var.gamma;
+            
+            if obj.opts.TIME_INDEP && (obj.opts.Tmax < Inf)
+                objective = objective + obj.opts.Tmax * poly_var.alpha;
+            end
         end
         
         function [poly_val, func_eval] = recover_poly(obj, poly_var)
@@ -144,26 +148,11 @@ classdef peak_sos < location_sos_interface
         function dynamics = package_dynamics(obj, func_in)
             %package up dynamics for use in the (old) sampler
             %peak/sampler
-            dynamics = package_dynamics@location_sos_interface(obj, func_in);
-            
-            
-            
-            
-            
+            dynamics = package_dynamics@location_sos_interface(obj, func_in);                                                
             
         end
         
-        function [out] = solve_program(obj, prog)
-            out = solve_program@location_sos_interface(obj, prog);
-            out.peak_val = out.obj;
-            out.optimal = 0;
-            
-            out.var = struct;
-            out.var.t = obj.vars.t;
-            out.var.x = obj.vars.x;
-            out.var.w = [];
-        end
-        
+       
     end
 end
 

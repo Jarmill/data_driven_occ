@@ -1,26 +1,23 @@
 %data driven peak estimation of a linear system
 
-%break up the sections here into functions
-
 PROBLEM = 1;
-SOLVE = 1;
-SAMPLE = 1;
-PLOT = 1;
+SOLVE = 0;
+SAMPLE = 0;
+PLOT = 0;
 
 if PROBLEM
 rng(33, 'twister')
 %% generate samples
-A_true = [-1 3; -1 -0.3];
-% A_true = [-1 1; -1 -0.3];
-f_true = @(t, x) A_true*x;
+f_true = @(t,x) [x(2); (-x(1)-x(2) + (1/3)*x(1)^3)];
+
 
 % Nsample = 50;
-Nsample = 20;
+Nsample = 10;
 % Nsample = 4;
-box_lim = 2;
+box_lim = 3;
 Tmax = 5;
 % epsilon = 2;
-epsilon = 1;
+epsilon = 0.3;
 sample = struct('t', Tmax, 'x', @() box_lim*(2*rand(2,1)-1));
 
 [observed] = corrupt_observations(Nsample,sample, f_true, epsilon);
@@ -32,8 +29,11 @@ x = sdpvar(2, 1);
 dmin = 1;
 dmax = 1;
 nx = 2;
-f0 = zeros(nx, 1);
-fw = kron(eye(nx), monolist(x, dmin, dmax)');
+f0 = [x(2); -x(2) + (1/3)*x(1)^3];
+% fw = [0 0; -x(1) 1];
+fw = [0; -x(1)];% 
+% f0 = zeros(nx, 1);
+% fw = kron(eye(nx), monolist(x, dmin, dmax)');
 % sdisplay(fw)
 
 
@@ -56,7 +56,6 @@ for i = 1:Nsample
     f0_curr = f0_func([tcurr; xcurr]);
     fw_curr = fw_func([tcurr; xcurr]);
     
-    %ensure the correct signs over here
     b_pos_curr = epsilon - f0_curr + xdotcurr;
     b_neg_curr = epsilon + f0_curr - xdotcurr;
     
@@ -87,18 +86,18 @@ fw_center = fw;
 
 %identify redundant constraints
 %code from noredund.m by Michael Kleder (2006)
-D = A_scale ./ repmat(b_scale,[1 size(A_scale,2)]);
-%number of points in convex hull capped at number of constraints
-[k, vol] = convhulln(D);
-% record which constraints generate points on the convex hull
-nr = unique(k(:));
-A_scale_orig = A_scale;
-b_scale_orig = b_scale;
-A_scale=A_scale(nr,:);
-b_scale=b_scale(nr);
+% D = A_scale ./ repmat(b_scale,[1 size(A_scale,2)]);
+% %number of points in convex hull capped at number of constraints
+% [k, vol] = convhulln(D);
+% % record which constraints generate points on the convex hull
+% nr = unique(k(:));
+% A_scale_orig = A_scale;
+% b_scale_orig = b_scale;
+% A_scale=A_scale(nr,:);
+% b_scale=b_scale(nr);
 
 box_cheb = poly_bounding_box(A_scale,b_scale);
-[box_cheb, box_center, box_half] = box_process(nw, box_cheb);
+% [box_cheb, box_center, box_half] = box_process(nw, box_cheb);
 
 W = struct('A', A_scale, 'b', b_scale);
 
@@ -109,24 +108,15 @@ end
 if SOLVE
     
     %start at a single point
-
-    C0 = [0; 0.5];
-    R0 = 0.2;
-    INIT_POINT = 0;
-    if INIT_POINT
-        X0 = C0;
-    else
-        X0 = struct('ineq', R0^2 - sum((x-C0).^2), 'eq', []);
-    end
-    
+    X0 = [1.5; 0];
     
     lsupp = loc_sos_options();
     lsupp.t = t;
     lsupp.TIME_INDEP = 0;
     lsupp.x = x;
     lsupp = lsupp.set_box(box_lim);
-    lsupp.X = struct('ineq', 2*box_lim^2 - sum(x.^2), 'eq', []);
-    % lsupp = lsupp.set_box(3);
+%     lsupp.X = struct('ineq', 2*box_lim^2 - sum(x.^2), 'eq', []);
+%     lsupp = lsupp.set_box(box_lim);;
     lsupp.X_init = X0;
     lsupp.f0 = f0_center;
     lsupp.fw = fw_center;
@@ -140,7 +130,7 @@ if SOLVE
     %% start up tester
     PM = peak_sos(lsupp, objective);
 
-    order = 2;
+    order = 3;
     d = 2*order;
 
     % [prog]= PM.make_program(d);
@@ -153,11 +143,7 @@ end
 if SAMPLE
     
     s_opt = sampler_options;
-    if INIT_POINT
-        s_opt.sample.x = @() X0;
-    else
-        s_opt.sample.x = @() ball_sample(2,1);
-    end
+    s_opt.sample.x = @() X0;
     s_opt.sample.d = @() rej_sample_poly(A_scale, b_scale, box_cheb);
     s_opt.Nd = nw;
     
@@ -178,8 +164,7 @@ if PLOT
 %     if PLOT
     
     PS = peak_sos_plotter(out, out_sim);
-    PS.nonneg_zeta();
-    PS.cost_plot();
+%     PS.nonneg_zeta();
     PS.state_plot();
     PS.nonneg_traj();
     

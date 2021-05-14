@@ -1,9 +1,9 @@
 %safety margin of a flow system with polytopic uncertainty
 
 
-SOLVE = 0;
-SAMPLE = 1;
-PLOT = 1;
+SOLVE = 1;
+SAMPLE = 0;
+PLOT = 0;
 
 if SOLVE
     
@@ -100,8 +100,8 @@ if SAMPLE
     % Nsample = 300;
 % Nsample = 150;
 % Nsample = 100;
-% Nsample = 2;
-Nsample = 50;
+Nsample = 2;
+% Nsample = 50;
     rng(33, 'twister')
 s_opt = sampler_options;
 

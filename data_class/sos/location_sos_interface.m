@@ -37,8 +37,12 @@ classdef location_sos_interface < handle
             %Form the SOS program associated with this problem
             [poly_var, coeff_var] = obj.make_poly(d);
             
+            fprintf('Created Polynomials\n')
+            
 %             nonneg = obj.form_nonneg(poly_var);                       
             [coeff, con, nonneg] = obj.make_cons(d, poly_var);    
+            fprintf('Formed Constraints\n')
+            
             
             poly_var.nonneg = nonneg;
             
@@ -83,8 +87,8 @@ classdef location_sos_interface < handle
 
                 m = length(obj.opts.W.b);
                 d_altern = d;
-                for i = 1:size(obj.opts.fw, 1)
-                    d_altern = max((2*ceil(d/2 + degree(obj.opts.fw(i, :))/2-1)), d_altern); %figure out degree bounds later
+                for i = 1:size(obj.opts.fw, 2)
+                    d_altern = max((2*ceil(d/2 + degree(obj.opts.fw(:, i))/2-1)), d_altern); %figure out degree bounds later
                 end
 
                 for i = 1:m
@@ -96,8 +100,16 @@ classdef location_sos_interface < handle
             
             %TODO: Time-independent with finite time
             
-            poly_out=struct('v', v, 'zeta', zeta, 't', t, 'x', x, 'v0', v0);
-            coeff_out = [cv; coeff_zeta];
+            if obj.opts.TIME_INDEP && (obj.opts.Tmax < Inf)
+                alpha = sdpvar(1,1);
+                coeff_alpha = alpha;
+            else
+                alpha = 0;
+                coeff_alpha = [];
+            end
+            
+            poly_out=struct('v', v, 'zeta', zeta, 't', t, 'x', x, 'v0', v0, 'alpha', alpha);
+            coeff_out = [cv; coeff_zeta;coeff_alpha];
         end
         
         function [coeff_lie, cons_lie, nonneg_lie] = make_lie_con(obj, d, poly)        
@@ -138,7 +150,7 @@ classdef location_sos_interface < handle
             if isempty(obj.opts.fw)
                 %no uncertainty at all in dynamics
                 Lv0 = dvdx*(scale_weight*obj.opts.f0) + jacobian(v, t);
-                [cons_lie, coeff_lie] =  obj.make_psatz(d, Xall, -Lv0, [t;x]);
+                [cons_lie, coeff_lie] =  obj.make_psatz(d, Xall, poly.alpha-Lv0, [t;x]);
 %                 constraint_psatz(-Lv0, Xall, [t;x], d);
                 cons_lie = cons_lie:'Lie standard (no input)';
                 
@@ -169,13 +181,15 @@ classdef location_sos_interface < handle
 
                     %Aw <= b
 %                     [consf0, coefff0] =  obj.make_psatz(d, Xall, Lv0+b'*zeta, [t;x]);
-                    [consf0, coefff0] =  obj.make_psatz(d, Xall, -Lv0-b'*zeta, [t;x]);
+                    [consf0, coefff0] =  obj.make_psatz(d, Xall, poly.alpha-Lv0-b'*zeta, [t;x]);
 
+                    %alpha: useful for time-independent uncertainty in
+                    %finite time
 
                     %output
                     coeff_lie = coefff0;
                     cons_lie = consf0:'Lie base duality';
-                    nonneg_lie = -Lv0 - b'*zeta;
+                    nonneg_lie = poly.alpha-Lv0 - b'*zeta;
                 end
                 %terms with uncertainty
                 %these are equality constraints in polynomial coefficients
@@ -214,6 +228,11 @@ classdef location_sos_interface < handle
                 end
             end
             
+            %time-independent alpha
+            if ~isnumeric(poly.alpha)
+                cons_lie = [cons_lie; [poly.alpha>=0]:'Time Indep. alpha'];
+            end
+            
             %output [coeff_lie, cons_lie]
         end
         
@@ -231,7 +250,8 @@ classdef location_sos_interface < handle
             [sol, monom, Gram, residual] = solvesos(prog.con, prog.objective, sdp_opts, prog.coeff);
             
             out = struct('poly', [], 'problem', sol.problem, 'sol', [], 'block', [], 'func', []);
-            if sol.problem == 0
+            if (sol.problem == 0) || (sol.problem == 4)
+                fprintf('Recovering Solution\n')
                 %the sets X0 and X1 are disconnected in time range [0, T]
                 [out.poly, out.func] = obj.recover_poly(prog.poly);
                 out.sol = sol;   
@@ -252,6 +272,7 @@ classdef location_sos_interface < handle
             %the main routine, run the SOS program at the target order
             d = 2*order;
             prog = obj.make_program(d);
+            fprintf('Solving Program\n')
             out= solve_program(obj, prog);
         end
         
@@ -280,13 +301,6 @@ classdef location_sos_interface < handle
             %evaluations of v at initial and terminal times
             
             
-            %terminal set
-%             if obj.opts.scale
-%                 v1 = replace(v_eval, t, 1);
-%             else
-%                 v1 = replace(v_eval, t, obj.opts.Tmax);
-%             end
-
             %nonnegative evaluation
             [cnn,mnn] = coefficients(poly_var.nonneg,[poly_var.t; poly_var.x]);
             nn_eval = value(cnn)*mnn;
@@ -297,18 +311,18 @@ classdef location_sos_interface < handle
                 %scale by time
                 v_eval = replace(v_eval, poly_var.t, poly_var.t/obj.opts.Tmax);
                 zeta_eval = replace(zeta_eval, poly_var.t, poly_var.t/obj.opts.Tmax);
-                v0 = replace(v_eval, t, 0);            
+%                 v0 = replace(v_eval, t, 0);            
                 nn_eval = replace(nn_eval, poly_var.t, poly_var.t/obj.opts.Tmax);
             end
-                        
-            poly_eval = struct('v', v_eval, 'zeta', zeta_eval, 'v0', v0, 'nonneg', nn_eval);
+            
+            
+            %do not scale by time here            
+            poly_eval = struct('v', v_eval, 'zeta', zeta_eval, 'nonneg', nn_eval);
             
             % form functions using helper function 'polyval_func'
             func_eval = struct;
             func_eval.v = polyval_func(v_eval, [t; x]);
-            func_eval.zeta = polyval_func(zeta_eval, [t; x]);
-            
-%             func_eval.v0 = polyval_func(v0, [x]);            
+            func_eval.zeta = polyval_func(zeta_eval, [t; x]);       
             func_eval.nonneg = polyval_func(nn_eval, [t;x]);            
         end
     

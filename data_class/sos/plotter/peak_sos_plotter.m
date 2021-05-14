@@ -44,6 +44,23 @@ classdef peak_sos_plotter < plotter_sos_interface
                 plot(xlim, [0,0], 'k:')
             end
         end
+
+        
+        function F = cost_plot(obj)
+
+            F = figure(23);
+            hold on
+            for j = 1:length(obj.out_sim)
+                osc = obj.out_sim{j};                    
+                plot(osc.t, osc.cost, 'c');
+
+            end
+            plot(xlim, obj.out.obj*[1,1], '--r', 'LineWidth', 3)
+            xlabel('time', 'FontSize', obj.FS_axis)
+            ylabel('$p(x)$', 'interpreter', 'latex', 'FontSize', obj.FS_axis);
+            title('Evaluated Cost', 'FontSize', obj.FS_title);   
+        end
+        
     end
 end
 

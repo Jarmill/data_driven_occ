@@ -25,9 +25,34 @@ classdef plotter_sos_interface < handle
             
         end
         
-        function F = cost_plot(obj)
-            %TODO: fill this in
-            F = 0;
+        function F = v_plot(obj)
+
+            F = figure(18);
+            
+            subplot(2, 1, 1)
+            hold on
+
+            for j = 1:length(obj.out_sim)
+                osc = obj.out_sim{j};                    
+                plot(osc.t, osc.v, 'c');
+
+            end
+            xlabel('time', 'FontSize', obj.FS_axis)
+            ylabel('$v(t,x)$', 'interpreter', 'latex', 'FontSize', obj.FS_axis);
+            title('Auxiliary Function', 'FontSize', obj.FS_title);   
+            
+            subplot(2,1,2)
+            hold on
+            for j = 1:length(obj.out_sim)
+                osc = obj.out_sim{j};                    
+                plot(osc.t(1:end-1), diff(osc.v), 'c');
+
+            end
+            xlabel('time', 'FontSize', obj.FS_axis)
+            ylabel('$\Delta v(t,x)$', 'interpreter', 'latex', 'FontSize', obj.FS_axis);
+            title('Auxiliary Function Decrease', 'FontSize', obj.FS_title);   
+            
+            
         end
         
         function F = state_plot(obj)
@@ -68,21 +93,17 @@ classdef plotter_sos_interface < handle
             F = figure(21);
             
             Nzeta = length(obj.out.poly.zeta);
-            tiledlayout(Nzeta, 1);
-            for i = 1:Nzeta
-                nexttile
-                hold on
-                for j = 1:length(obj.out_sim)
-                    osc = obj.out_sim{j};                    
-                    plot(osc.t, osc.nonneg(end-(Nzeta-i), :), 'c')
-                end
-                
-                ax_loc_curr = ['$\zeta_', num2str(i), '(t,x)$'];
-                xlabel('time', 'FontSize', obj.FS_axis)
-                ylabel(ax_loc_curr , 'interpreter', 'latex', 'FontSize', obj.FS_axis);
-                title(['Constraint ', num2str(i), ' Slack'], 'FontSize', obj.FS_title);   
-                plot(xlim, [0,0], 'k:')
+            hold on
+            for j = 1:length(obj.out_sim)
+                osc = obj.out_sim{j};                    
+                plot(osc.t, osc.nonneg(end-Nzeta:end, :), 'c')
             end
+
+            ax_loc_curr = ['$\zeta(t,x)$'];
+            xlabel('time', 'FontSize', obj.FS_axis)
+            ylabel(ax_loc_curr , 'interpreter', 'latex', 'FontSize', obj.FS_axis);
+            title(['Constraint Slack'], 'FontSize', obj.FS_title);   
+            plot(xlim, [0,0], 'k:')
             
             
         end

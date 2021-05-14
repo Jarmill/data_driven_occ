@@ -67,6 +67,9 @@ box_cheb = poly_bounding_box(A_w_signed ,b_w_cheb);
 
 sys_true = ss(A_true, [1; 0], [0 1], 0);
 
+X0 = [0; 0.5];
+[tp,xp] = ode45(@(t,x)f_true(x), [0, Tmax], X0);
+
 
 if PLOT
 figure(1)
