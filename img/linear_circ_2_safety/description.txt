@@ -1,0 +1,22 @@
+50 points sampled from [-2, 2]^2
+
+True dynamics 
+x' = [-1 4; -1 -0.3];
+
+noise bound epsilon = 2.5, 
+
+11 constraints, 30 vertices
+
+Uncertainty: coefficients of linear system
+
+Initial set: circle with radius 0.2 centered at [-1; 0]
+
+Safety margin, maximin objective
+-0.16-x(2)-x(1)^2-x(2)^2
+-0.353553390593-0.707106781187*x(1)-0.707106781187*x(2)
+
+Unsafe set:
+circle with radius 0.3 centered at [0; -0.5]
+half plane -0.5-x(1)-x(2) >= 0
+
+order 3, peak bound = -0.0456 (safety margin)

@@ -4,49 +4,32 @@
 
 PROBLEM = 1;
 SOLVE = 1;
-SAMPLE = 0;
-PLOT = 0;
-
-
-%sample data only from initial set
-C0 = [-1; 0; 0];
-R0 = 0.2;
-x0_sample_ball = @() R0*ball_sample(1,3)'+C0;
-
-INIT_SAMPLE_ONLY = 0;
+SAMPLE = 1;
+PLOT = 1;
 
 if PROBLEM
 rng(33, 'twister')
 %% generate samples
-% A_true = [-1 4; -1 -0.3];
-A_true = [-1 4 1; -1 -0.3 1; -1 1 -1];
+A_true = [-1 4; -1 -0.3];
 % A_true = [-1 1; -1 -0.3];
 f_true = @(t, x) A_true*x;
 
-
-% Nsample = 150;
-Nsample = 100;
-% Nsample = 50;
+Nsample = 50;
 % Nsample = 40;
 % Nsample = 30;
 % Nsample = 20;
-% Nsample = 10;
 % Nsample = 4;
 box_lim = 2;
 Tmax = 5;
-% epsilon = 1;
 % epsilon = 2;
-epsilon = 3;
-sample = struct('t', Tmax, 'x', @() box_lim*(2*rand(3,1)-1));
-if INIT_SAMPLE_ONLY
-    sample.x = x0_sample_ball;
-end
+epsilon = 2.5;
+sample = struct('t', Tmax, 'x', @() box_lim*(2*rand(2,1)-1));
 
 % [observed] = corrupt_observations(Nsample,sample, f_true, epsilon);
 
 %% generate model
 t = sdpvar(1, 1);
-x = sdpvar(3, 1);
+x = sdpvar(2, 1);
 
 DG = data_generator(sample);
 
@@ -63,7 +46,8 @@ if SOLVE
     %start at a single point
 
 %     C0 = [0; 0.5];
-
+    C0 = [-1; 0];
+    R0 = 0.2;
     INIT_POINT = 0;
     if INIT_POINT
         X0 = C0;
@@ -87,12 +71,24 @@ if SOLVE
 
     lsupp.verbose = 1;
 
-    objective = x(1);
+%     objective = x(1);
+
+    Ru = 0.3;
+    Cu = [0; -0.5];
+    c1f = Ru^2 - sum((x-Cu).^2);
+%     c2f = -diff(x-Cu);
+
+    theta_c = 5*pi/4;
+    w_c = [cos(theta_c); sin(theta_c)];
+    c2f = w_c(1)*(x(1) - Cu(1)) + w_c(2) * (x(2) - Cu(2)); 
+
+    objective = [c1f; c2f];
     
     %% start up tester
     PM = peak_sos(lsupp, objective);
 
-    order = 2;
+%     order = 4;
+    order = 3;
     d = 2*order;
 
     % [prog]= PM.make_program(d);
@@ -108,7 +104,7 @@ if SAMPLE
     if INIT_POINT
         s_opt.sample.x = @() X0;
     else
-        s_opt.sample.x = x0_sample_ball;
+        s_opt.sample.x = @() R0*ball_sample(1,2)'+C0;
     end
     s_opt.sample.d = w_handle;
     s_opt.Nd = size(model.fw, 2);
@@ -116,6 +112,7 @@ if SAMPLE
     s_opt.Tmax = lsupp.Tmax;
     s_opt.parallel = 1;
     
+%     Nsample_traj = 
     Nsample_traj = 100;
     
     tic
@@ -138,21 +135,22 @@ if PLOT
     PS.v_plot();
     PS.nonneg_traj();
     
-    PS.state_plot_3(box_lim);
+    PS.state_plot_2(box_lim);
     if INIT_POINT
-        scatter3(C0(1), C0(2), C0(3), 200, 'ok')
-    else       
-        [Xs, Ys, Zs] = sphere(40);
-        surf(Xs*R0 + C0(1), Ys*R0 + C0(2), Zs*R0 + C0(3), 'EdgeColor', 'None', 'FaceAlpha', 0.4)    
+        scatter(C0(1), C0(2), 200, 'k')
+    else
+        theta = linspace(0,2*pi, 200);
+        plot(R0*cos(theta)+C0(1), R0*sin(theta)+C0(2), 'color', 'k', 'LineWidth', 3);
     end
-%     viscircles(C0', R0, 'color', 'k', 'LineWidth', 3);
     
-%     if ~INIT_POINT
-%         theta = linspace(0,2*pi, 200);
-%         plot(R0*cos(theta)+C0(1), R0*sin(theta)+C0(2), 'color', 'k', 'LineWidth', 3);
-%     end
+    %plot the unsafe set
+    theta_half_range = linspace(theta_c-pi/2, theta_c + pi/2, 200);
+    circ_half = [cos(theta_half_range); sin(theta_half_range)];
+    Xu = Cu + circ_half* Ru;
+    patch(Xu(1, :), Xu(2, :), 'r', 'Linewidth', 3, 'EdgeColor', 'none')
     
-    DG.data_plot_3(observed);
+    
+    DG.data_plot_2(observed);
 %     viscircles(C0', R0, 'color', 'k', 'LineWidth', 3);
     
     %observation plot

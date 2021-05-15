@@ -137,7 +137,7 @@ classdef plotter_sos_interface < handle
             
             xlabel('$x_1$', 'interpreter', 'latex', 'FontSize', obj.FS_axis);
             ylabel('$x_2$', 'interpreter', 'latex', 'FontSize', obj.FS_axis);
-            ylabel('$x_3$', 'interpreter', 'latex', 'FontSize', obj.FS_axis);
+            zlabel('$x_3$', 'interpreter', 'latex', 'FontSize', obj.FS_axis);
             title('Phase Plane', 'FontSize', obj.FS_title);   
             
             
