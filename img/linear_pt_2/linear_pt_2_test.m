@@ -3,26 +3,26 @@
 %break up the sections here into functions
 
 PROBLEM = 1;
-SOLVE = 0;
-SAMPLE = 0;
-PLOT = 0;
+SOLVE = 1;
+SAMPLE = 1;
+PLOT = 1;
 
 if PROBLEM
 rng(33, 'twister')
 %% generate samples
-A_true = [-1 3; -1 -0.3];
+A_true = [-1 4; -1 -0.3];
 % A_true = [-1 1; -1 -0.3];
 f_true = @(t, x) A_true*x;
 
-% Nsample = 50;
-Nsample = 40;
+Nsample = 50;
+% Nsample = 40;
 % Nsample = 30;
 % Nsample = 20;
 % Nsample = 4;
 box_lim = 2;
 Tmax = 5;
-epsilon = 2;
-% epsilon = 1;
+% epsilon = 2;
+epsilon = 2.5;
 sample = struct('t', Tmax, 'x', @() box_lim*(2*rand(2,1)-1));
 
 % [observed] = corrupt_observations(Nsample,sample, f_true, epsilon);
@@ -34,12 +34,9 @@ x = sdpvar(2, 1);
 DG = data_generator(sample);
 
 observed = DG.corrupt_observations(Nsample, f_true, epsilon);
+[model, W] = DG.reduced_model(observed, x, 1, 1);
 
-model = DG.poly_model(x,1,1);
-W = DG.data_cons(model, x, observed);
-[
-
-
+[w_handle, box]= DG.make_sampler(W);
 
 end
  
@@ -48,7 +45,8 @@ if SOLVE
     
     %start at a single point
 
-    C0 = [0; 0.5];
+%     C0 = [0; 0.5];
+    C0 = [-1; 0];
     R0 = 0.2;
     INIT_POINT = 1;
     if INIT_POINT
@@ -66,8 +64,8 @@ if SOLVE
     lsupp.X = struct('ineq', 2*box_lim^2 - sum(x.^2), 'eq', []);
     % lsupp = lsupp.set_box(3);
     lsupp.X_init = X0;
-    lsupp.f0 = f0_center;
-    lsupp.fw = fw_center;
+    lsupp.f0 = model.f0;
+    lsupp.fw = model.fw;
     lsupp.W = W;
     lsupp.Tmax = Tmax;
 
@@ -78,7 +76,7 @@ if SOLVE
     %% start up tester
     PM = peak_sos(lsupp, objective);
 
-    order = 3;
+    order = 4;
     d = 2*order;
 
     % [prog]= PM.make_program(d);
@@ -94,10 +92,10 @@ if SAMPLE
     if INIT_POINT
         s_opt.sample.x = @() X0;
     else
-        s_opt.sample.x = @() ball_sample(2,1);
+        s_opt.sample.x = @() R0*ball_sample(1,2)'+C0;
     end
-    s_opt.sample.d = @() rej_sample_poly(A_scale, b_scale, box_cheb);
-    s_opt.Nd = nw;
+    s_opt.sample.d = w_handle;
+    s_opt.Nd = size(model.fw, 2);
     
     s_opt.Tmax = lsupp.Tmax;
     s_opt.parallel = 1;
@@ -119,22 +117,23 @@ if PLOT
     
     PS = peak_sos_plotter(out, out_sim);
     PS.nonneg_zeta();
-    PS.cost_plot();
+    PS.obj_plot();
     PS.state_plot();
+    PS.v_plot();
     PS.nonneg_traj();
     
-    PS.state_plot_2();
+    PS.state_plot_2(box_lim);
+    if INIT_POINT
+        scatter(C0(1), C0(2), 200, 'k')
+    else
+        theta = linspace(0,2*pi, 200);
+        plot(R0*cos(theta)+C0(1), R0*sin(theta)+C0(2), 'color', 'k', 'LineWidth', 3);
+    end
+    
+    DG.data_plot_2(observed);
+%     viscircles(C0', R0, 'color', 'k', 'LineWidth', 3);
     
     %observation plot
-    figure(2)
-    clf
-    hold on
-    quiver(observed.x(1, :), observed.x(2, :), observed.xdot_true(1, :), observed.xdot_true(2, :))
-    quiver(observed.x(1, :), observed.x(2, :), observed.xdot_noise(1, :), observed.xdot_noise(2, :))
-    axis square
-    xlabel('$x_1$', 'interpreter', 'latex', 'FontSize', PS.FS_axis);
-    ylabel('$x_2$', 'interpreter', 'latex', 'FontSize', PS.FS_axis);          
-    title(['Noisy Observations with \epsilon=', num2str(epsilon)], 'FontSize', PS.FS_title)
-
+    
 end
 

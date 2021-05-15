@@ -28,14 +28,16 @@ classdef peak_sos_plotter < plotter_sos_interface
                 nexttile
                 hold on
                 
+                Nzeta = length(obj.out.poly.zeta);
+                
                 for j = 1:length(obj.out_sim)
                     osc = obj.out_sim{j};                    
                     if i == 1
-                        plot(osc.t, osc.nonneg(1:(end-2), :), 'c');
+                        plot(osc.t, osc.nonneg(1:(end-2-Nzeta), :), 'c');
                     elseif i==2
-                        plot(osc.t, osc.nonneg(end-1, :), 'c');
+                        plot(osc.t, osc.nonneg(end-1-Nzeta, :), 'c');
                     else
-                        plot(osc.t, osc.nonneg(end, :), 'c');
+                        plot(osc.t, osc.nonneg(end-Nzeta, :), 'c');
                     end
                 end
                 xlabel('time', 'FontSize', obj.FS_axis)
@@ -58,10 +60,25 @@ classdef peak_sos_plotter < plotter_sos_interface
             cy = obj.out.func.cost(y) - obj.out.obj;
             fimplicit(cy + 1e-8*sum(y), limits,  '--r', 'HandleVisibility', 'Off', 'LineWidth', 2)
         end
-        
-        
-        function F = cost_plot(obj)
 
+        function F = state_plot_3(obj, box_lim)
+            if nargin == 1
+                box_lim = [];
+            end
+            
+            [F, limits] = state_plot_3@plotter_sos_interface(obj, box_lim);
+            
+            
+            %implicit curves
+            syms y [2, 1];
+            cy = obj.out.func.cost(y) - obj.out.obj;
+            fimplicit3(cy + 1e-8*sum(y), limits,  'r', 'HandleVisibility', 'Off', 'FaceAlpha', 0.5, 'EdgeColor', 'None')
+        end
+
+        
+        
+        function F = obj_plot(obj)
+            %plot the objective
             F = figure(23);
             clf
             hold on
@@ -73,7 +90,7 @@ classdef peak_sos_plotter < plotter_sos_interface
             plot(xlim, obj.out.obj*[1,1], '--r', 'LineWidth', 3)
             xlabel('time', 'FontSize', obj.FS_axis)
             ylabel('$p(x)$', 'interpreter', 'latex', 'FontSize', obj.FS_axis);
-            title('Evaluated Cost', 'FontSize', obj.FS_title);   
+            title('Evaluated Objective', 'FontSize', obj.FS_title);   
         end
         
     end

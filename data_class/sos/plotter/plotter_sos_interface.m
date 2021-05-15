@@ -37,6 +37,8 @@ classdef plotter_sos_interface < handle
                 plot(osc.t, osc.v, 'c');
 
             end
+            
+            plot(xlim, [1;1]*obj.out.poly.gamma, '--r', 'LineWidth', 3)
             xlabel('time', 'FontSize', obj.FS_axis)
             ylabel('$v(t,x)$', 'interpreter', 'latex', 'FontSize', obj.FS_axis);
             title('Auxiliary Function', 'FontSize', obj.FS_title);   
@@ -61,6 +63,7 @@ classdef plotter_sos_interface < handle
             nx = size(obj.out_sim{1}.x, 2);
             nplt = nx;
             ax = cell(nplt, 1);
+            tiledlayout(nplt,1);
             for k = 1:nplt
                 ax{k} = nexttile;
                 title(['State ', num2str(k), ' vs. Time'], 'FontSize', obj.FS_title);   
@@ -89,11 +92,13 @@ classdef plotter_sos_interface < handle
                 xcurr = obj.out_sim{i}.x;
                 plot(xcurr(:, 1), xcurr(:, 2), 'c')
             end
-            for i = 1:length(obj.out_sim)
-                tcurr = obj.out_sim{i}.t;
-                xcurr = obj.out_sim{i}.x;
-                scatter(xcurr(1, 1), xcurr(1, 2), 100, 'k')
-            end                        
+            
+            %don't mark the initial conditions
+%             for i = 1:length(obj.out_sim)
+%                 tcurr = obj.out_sim{i}.t;
+%                 xcurr = obj.out_sim{i}.x;
+%                 scatter(xcurr(1, 1), xcurr(1, 2), 100, 'k')
+%             end                        
             
             xlabel('$x_1$', 'interpreter', 'latex', 'FontSize', obj.FS_axis);
             ylabel('$x_2$', 'interpreter', 'latex', 'FontSize', obj.FS_axis);
@@ -113,6 +118,42 @@ classdef plotter_sos_interface < handle
             
         end
  
+        function [F, limits] = state_plot_3(obj, box_lim)
+            F = figure(30);
+            clf
+            hold on 
+            for i = 1:length(obj.out_sim)
+                tcurr = obj.out_sim{i}.t;
+                xcurr = obj.out_sim{i}.x;
+                plot3(xcurr(:, 1), xcurr(:, 2), xcurr(:, 3), 'c')
+            end
+            
+            %don't mark the initial conditions
+%             for i = 1:length(obj.out_sim)
+%                 tcurr = obj.out_sim{i}.t;
+%                 xcurr = obj.out_sim{i}.x;
+%                 scatter(xcurr(1, 1), xcurr(1, 2), 100, 'k')
+%             end                        
+            
+            xlabel('$x_1$', 'interpreter', 'latex', 'FontSize', obj.FS_axis);
+            ylabel('$x_2$', 'interpreter', 'latex', 'FontSize', obj.FS_axis);
+            ylabel('$x_3$', 'interpreter', 'latex', 'FontSize', obj.FS_axis);
+            title('Phase Plane', 'FontSize', obj.FS_title);   
+            
+            
+            if (nargin == 2 ) && ~isempty(box_lim)
+                box = box_process(3, box_lim);
+                xlim(box(1, :));
+                ylim(box(2, :));
+                zlim(box(3, :));
+                limits = [box(1, :), box(2, :), box(3, :)];
+            else
+                limits = [xlim, ylim, zlim];
+            end
+            
+            pbaspect([diff(xlim), diff(ylim), diff(zlim)])
+            view(3);
+        end
         
         function F = nonneg_zeta(obj)
             %plot the nonnegative slack functions zeta

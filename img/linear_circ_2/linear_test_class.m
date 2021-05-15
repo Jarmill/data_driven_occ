@@ -7,14 +7,6 @@ SOLVE = 1;
 SAMPLE = 1;
 PLOT = 1;
 
-
-%sample data only from initial set
-C0 = [-1; 0];
-R0 = 0.2;
-x0_sample_ball = @() R0*ball_sample(1,2)'+C0;
-
-INIT_SAMPLE_ONLY = 1;
-
 if PROBLEM
 rng(33, 'twister')
 %% generate samples
@@ -26,17 +18,12 @@ Nsample = 50;
 % Nsample = 40;
 % Nsample = 30;
 % Nsample = 20;
-% Nsample = 10;
 % Nsample = 4;
 box_lim = 2;
 Tmax = 5;
-epsilon = 1;
 % epsilon = 2;
-% epsilon = 2.5;
+epsilon = 2.5;
 sample = struct('t', Tmax, 'x', @() box_lim*(2*rand(2,1)-1));
-if INIT_SAMPLE_ONLY
-    sample.x = x0_sample_ball;
-end
 
 % [observed] = corrupt_observations(Nsample,sample, f_true, epsilon);
 
@@ -59,7 +46,8 @@ if SOLVE
     %start at a single point
 
 %     C0 = [0; 0.5];
-
+    C0 = [-1; 0];
+    R0 = 0.2;
     INIT_POINT = 0;
     if INIT_POINT
         X0 = C0;
@@ -104,7 +92,7 @@ if SAMPLE
     if INIT_POINT
         s_opt.sample.x = @() X0;
     else
-        s_opt.sample.x = x0_sample_ball;
+        s_opt.sample.x = @() R0*ball_sample(1,2)'+C0;
     end
     s_opt.sample.d = w_handle;
     s_opt.Nd = size(model.fw, 2);

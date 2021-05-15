@@ -1,0 +1,14 @@
+50 points sampled from [-2, 2]^2
+
+True dynamics 
+x' = [-1 4; -1 -0.3];
+
+noise bound epsilon = 2.5
+
+Uncertainty: coefficients of linear system
+
+Maximize x(1)
+
+Starting at circle with radius 0.2 with center [-1; 0]
+
+order 4, peak bound = 0.6991 

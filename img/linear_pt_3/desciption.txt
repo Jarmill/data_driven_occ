@@ -1,0 +1,12 @@
+150 points
+
+True dynamics 
+x' = [-1 4 1; -1 -0.3 1; -1 1 -1]x;
+
+noise bound epsilon = 1
+
+1600 vertices
+
+start at point x0 = [-1; 0; 0]
+
+order 3

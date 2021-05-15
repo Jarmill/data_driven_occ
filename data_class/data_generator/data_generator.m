@@ -16,6 +16,7 @@ classdef data_generator
             obj.sample = sample;            
         end
         
+        %% generate constraints
         function [observed] = corrupt_observations(obj, Np, f, epsilon)
         %Generate Nsample corrupted observations of the system x'(t) = f(t,x)
         %with an L_infinity bounded noise of epsilon
@@ -168,6 +169,7 @@ classdef data_generator
             
         end
         
+        %% Process constraints
         function [model_out, W_cheb] = center_cheb(obj, model, W)
             %% Center the polytope
             %box
@@ -238,6 +240,37 @@ classdef data_generator
             %use rejection sampling to sample points from a polytope
             box = poly_bounding_box(W.A,W.b);
             w_handle = @() rej_sample_poly(W.A, W.b, box);
+        end
+        
+        %% plot vector fields
+        
+        function F = data_plot_2(obj, observed)
+            F=figure(2);
+            clf
+            hold on
+            quiver(observed.x(1, :), observed.x(2, :), observed.xdot_true(1, :), observed.xdot_true(2, :))
+            quiver(observed.x(1, :), observed.x(2, :), observed.xdot_noise(1, :), observed.xdot_noise(2, :))
+            axis square
+            legend({'Ground Truth', 'Noisy Data'}, 'FontSize', 12, 'location', 'northwest')
+            xlabel('$x_1$', 'interpreter', 'latex', 'FontSize', 12);
+            ylabel('$x_2$', 'interpreter', 'latex', 'FontSize', 12);          
+            title(['Noisy Observations with \epsilon=', num2str(observed.epsilon)], 'FontSize', 16)
+        end
+        
+        
+        function F = data_plot_3(obj, observed)
+            F=figure(2);
+            clf
+            hold on
+            quiver3(observed.x(1, :), observed.x(2, :),observed.x(3, :), observed.xdot_true(1, :), observed.xdot_true(2, :),observed.xdot_true(3, :))
+            quiver3(observed.x(1, :), observed.x(2, :),observed.x(3, :), observed.xdot_noise(1, :), observed.xdot_noise(2, :),observed.xdot_noise(3, :))
+            axis square
+            legend({'Ground Truth', 'Noisy Data'}, 'FontSize', 12, 'location', 'northwest')
+            xlabel('$x_1$', 'interpreter', 'latex', 'FontSize', 12);
+            ylabel('$x_2$', 'interpreter', 'latex', 'FontSize', 12);          
+            ylabel('$x_3$', 'interpreter', 'latex', 'FontSize', 12);          
+            view(3)
+            title(['Noisy Observations with \epsilon=', num2str(observed.epsilon)], 'FontSize', 16)
         end
     end
 end

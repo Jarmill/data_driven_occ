@@ -9,20 +9,24 @@ PLOT = 1;
 
 
 %sample data only from initial set
-C0 = [-1; 0];
+C0 = [-1; 0; 0];
 R0 = 0.2;
-x0_sample_ball = @() R0*ball_sample(1,2)'+C0;
+x0_sample_ball = @() R0*ball_sample(1,3)'+C0;
 
-INIT_SAMPLE_ONLY = 1;
+INIT_SAMPLE_ONLY = 0;
 
 if PROBLEM
 rng(33, 'twister')
 %% generate samples
-A_true = [-1 4; -1 -0.3];
+% A_true = [-1 4; -1 -0.3];
+A_true = [-1 4 1; -1 -0.3 1; -1 1 -1];
 % A_true = [-1 1; -1 -0.3];
 f_true = @(t, x) A_true*x;
 
-Nsample = 50;
+
+Nsample = 150;
+% Nsample = 100;
+% Nsample = 50;
 % Nsample = 40;
 % Nsample = 30;
 % Nsample = 20;
@@ -33,7 +37,7 @@ Tmax = 5;
 epsilon = 1;
 % epsilon = 2;
 % epsilon = 2.5;
-sample = struct('t', Tmax, 'x', @() box_lim*(2*rand(2,1)-1));
+sample = struct('t', Tmax, 'x', @() box_lim*(2*rand(3,1)-1));
 if INIT_SAMPLE_ONLY
     sample.x = x0_sample_ball;
 end
@@ -42,7 +46,7 @@ end
 
 %% generate model
 t = sdpvar(1, 1);
-x = sdpvar(2, 1);
+x = sdpvar(3, 1);
 
 DG = data_generator(sample);
 
@@ -88,7 +92,7 @@ if SOLVE
     %% start up tester
     PM = peak_sos(lsupp, objective);
 
-    order = 4;
+    order = 3;
     d = 2*order;
 
     % [prog]= PM.make_program(d);
@@ -134,15 +138,18 @@ if PLOT
     PS.v_plot();
     PS.nonneg_traj();
     
-    PS.state_plot_2(box_lim);
-    viscircles(C0', R0, 'color', 'k', 'LineWidth', 3);
-    
-    if ~INIT_POINT
-        theta = linspace(0,2*pi, 200);
-        plot(R0*cos(theta)+C0(1), R0*sin(theta)+C0(2), 'color', 'k', 'LineWidth', 3);
+    PS.state_plot_3(box_lim);
+    if INIT_POINT
+        scatter3(C0(1), C0(2), C0(3), 200, 'ok')
     end
+%     viscircles(C0', R0, 'color', 'k', 'LineWidth', 3);
     
-    DG.data_plot_2(observed);
+%     if ~INIT_POINT
+%         theta = linspace(0,2*pi, 200);
+%         plot(R0*cos(theta)+C0(1), R0*sin(theta)+C0(2), 'color', 'k', 'LineWidth', 3);
+%     end
+    
+    DG.data_plot_3(observed);
 %     viscircles(C0', R0, 'color', 'k', 'LineWidth', 3);
     
     %observation plot
