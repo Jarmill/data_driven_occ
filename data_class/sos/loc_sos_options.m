@@ -17,6 +17,7 @@ classdef loc_sos_options
         
         t = []; %time
         x = []; %state
+        w = []; %uncertainty (perform polytopic decomposition if w is empty)
         
         verbose = 0; %solver output: https://yalmip.github.io/faq/runinsilent/
         

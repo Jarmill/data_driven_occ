@@ -83,7 +83,7 @@ classdef location_sos_interface < handle
             zeta = [];
             coeff_zeta = [];
             
-            if ~isempty(obj.opts.W)
+            if ~isempty(obj.opts.W) && ~isempty(obj.opts.w)
 
                 m = length(obj.opts.W.b);
                 d_altern = d;
@@ -147,6 +147,31 @@ classdef location_sos_interface < handle
             %lie derivative with no uncertainty
             dvdx = jacobian(v, x);                        
             
+            if ~isempty(obj.opts.w)
+                %do not perform polytopic decomposition of w
+                
+                w = obj.opts.w;
+                
+                %stack the support set
+                Wsupp = struct('ineq', obj.opts.W.b - obj.opts.W.A*w, 'eq', []);
+                                
+                XF = Xall;
+                XF.ineq = [XF.ineq; Wsupp.ineq];
+                
+                F = obj.opts.f0 + obj.opts.fw*w;
+                
+                %Assume time-dependent for now
+                %TODO: fix this (and in the next section
+                %'isempty(obj.opts.fw)'
+                Lv0 = dvdx*(scale_weight*F) + jacobian(v, t);
+                
+                [cons_lie, coeff_lie] =  obj.make_psatz(d, F, poly.alpha-Lv0, [t;x;w]);
+%                 constraint_psatz(-Lv0, Xall, [t;x], d);
+                cons_lie = cons_lie:'Lie with variable w';
+                
+                nonneg_lie = -Lv0;
+            else
+                %perform polytopic decomposition of w
             if isempty(obj.opts.fw)
                 %no uncertainty at all in dynamics
                 Lv0 = dvdx*(scale_weight*obj.opts.f0) + jacobian(v, t);
@@ -226,6 +251,7 @@ classdef location_sos_interface < handle
                     cons_lie = [cons_lie; conszeta:['zeta ', num2str(j), ' sos']];
                     nonneg_lie = [nonneg_lie; zeta_curr];
                 end
+            end
             end
             
             %time-independent alpha
@@ -327,7 +353,7 @@ classdef location_sos_interface < handle
             func_eval = struct;
             func_eval.v = polyval_func(v_eval, [t; x]);
             func_eval.zeta = polyval_func(zeta_eval, [t; x]);       
-            func_eval.nonneg = polyval_func(nn_eval, [t;x]);            
+            func_eval.nonneg = polyval_func(nn_eval, [t;x; obj.opts.w]);            
         end
     
         function dynamics = package_dynamics(obj, func_in)
