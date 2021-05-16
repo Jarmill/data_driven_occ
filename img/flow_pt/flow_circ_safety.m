@@ -2,19 +2,20 @@
 
 %break up the sections here into functions
 
-PROBLEM = 0;
+PROBLEM = 1;
 SOLVE = 0;
-SAMPLE = 1;
-PLOT = 1;
+SAMPLE = 0;
+PLOT = 0;
 
 if PROBLEM
 rng(33, 'twister')
 %% generate samples
-A_true = [-1 4; -1 -0.3];
 % A_true = [-1 1; -1 -0.3];
-f_true = @(t, x) A_true*x;
+f_true = @(t, x) [x(2); -x(1) + (1/3).* x(1).^3 - x(2)];
 
-Nsample = 50;
+
+Nsample = 100;
+% Nsample = 50;
 % Nsample = 40;
 % Nsample = 30;
 % Nsample = 20;
@@ -22,10 +23,11 @@ Nsample = 50;
 box_lim = 2;
 Tmax = 5;
 % epsilon = 2;
-epsilon = 2.5;
+epsilon = [0; 2.5];
+% epsilon = [0; 0.5];
 sample = struct('t', Tmax, 'x', @() box_lim*(2*rand(2,1)-1));
 
-% [observed] = corrupt_observations(Nsample,sample, f_true, epsilon);
+
 
 %% generate model
 t = sdpvar(1, 1);
@@ -34,8 +36,18 @@ x = sdpvar(2, 1);
 DG = data_generator(sample);
 
 observed = DG.corrupt_observations(Nsample, f_true, epsilon);
-[model, W] = DG.reduced_model(observed, x, 1, 1);
+% [model, W] = DG.reduced_model(observed, x, 1, 1);
+% model = DG.poly_model(vars, 3);
+mlist = monolist(x, 3);
+model = struct('f0', [1;0], 'fw', [zeros(1, length(mlist)); mlist']);
 
+W = DG.data_cons(model, x, observed);
+[model_cheb,W_cheb] = DG.center_cheb(model, W);
+W_red = DG.reduce_constraints(W_cheb);
+
+
+model = model_cheb;
+W = W_red;
 [w_handle, box]= DG.make_sampler(W);
 
 end

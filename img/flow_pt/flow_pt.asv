@@ -2,17 +2,16 @@
 
 %break up the sections here into functions
 
-PROBLEM = 0;
-SOLVE = 0;
-SAMPLE = 1;
-PLOT = 1;
+PROBLEM = 1;
+SOLVE = 1;
+SAMPLE = 0;
+PLOT = 0;
 
 if PROBLEM
 rng(33, 'twister')
 %% generate samples
-A_true = [-1 4; -1 -0.3];
 % A_true = [-1 1; -1 -0.3];
-f_true = @(t, x) A_true*x;
+f_true = @(t, x) [x(2); -x(1) + (1/3).* x(1).^3 - x(2)]*x;
 
 Nsample = 50;
 % Nsample = 40;
@@ -25,7 +24,7 @@ Tmax = 5;
 epsilon = 2.5;
 sample = struct('t', Tmax, 'x', @() box_lim*(2*rand(2,1)-1));
 
-% [observed] = corrupt_observations(Nsample,sample, f_true, epsilon);
+
 
 %% generate model
 t = sdpvar(1, 1);

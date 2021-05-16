@@ -31,7 +31,8 @@ classdef data_generator
         %                   x:          state points
         %                   xdot_true:  noiseless observations
         %                   xdot_noise: noisy observations
-        %                   epsilon:    noise bound
+        %                   epsilon:    noise bound (per coordinate if
+        %                   necessary)
 
 
         %% initial fill of output
@@ -43,7 +44,7 @@ classdef data_generator
             'xdot_true', zeros(nx, Np), 'xdot_noise', zeros(nx, Np), 'epsilon', epsilon);
 
 
-        noise_sample = (2*rand(nx, Np)-1)*epsilon;
+        noise_sample = (2*rand(nx, Np)-1).*epsilon;
 
 
         %% generate sampled points
@@ -132,8 +133,15 @@ classdef data_generator
             fw_func = polyval_func(model.fw, vars);
             
             Nsample = length(observed.t);
+            if length(observed.epsilon) > 1
+                neps = nnz(observed.epsilon);
+                eps_ind = find(observed.epsilon);
+            else
+                neps = nx;
+                eps_ind = 1:nx;
+            end
             nw = size(model.fw, 2);   %number of uncertainties
-            m = nx*Nsample*2;   %number of constraints
+            m = neps*Nsample*2;         %number of constraints
             A = zeros(m, nw);
             b = zeros(m, 1);
 
@@ -159,10 +167,12 @@ classdef data_generator
                 b_pos_curr = observed.epsilon - f0_curr + xdotcurr;
                 b_neg_curr = observed.epsilon + f0_curr - xdotcurr;
 
-                A(counter+(1:2*nx), :) = [fw_curr; -fw_curr];
-                b(counter+(1:2*nx)) = [b_pos_curr; b_neg_curr];
+%                 fw_eps = fw_curr(eps_ind, :);                                
+                A(counter+(1:2*neps), :) = [fw_curr(eps_ind, :); -fw_curr(eps_ind, :)];
+                b(counter+(1:2*neps)) = [b_pos_curr(eps_ind, :); b_neg_curr(eps_ind, :)];
 
-                counter = counter + 2*nx;
+
+                counter = counter + 2*neps;
             end         
             
             W = struct('A', A, 'b', b);
@@ -254,7 +264,7 @@ classdef data_generator
             legend({'Ground Truth', 'Noisy Data'}, 'FontSize', 12, 'location', 'northwest')
             xlabel('$x_1$', 'interpreter', 'latex', 'FontSize', 12);
             ylabel('$x_2$', 'interpreter', 'latex', 'FontSize', 12);          
-            title(['Noisy Observations with \epsilon=', num2str(observed.epsilon)], 'FontSize', 16)
+            title(['Noisy Observations with \epsilon=', sprintf('%0.1f,',observed.epsilon)], 'FontSize', 16)
         end
         
         
