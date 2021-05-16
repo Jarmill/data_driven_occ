@@ -4,14 +4,15 @@
 
 PROBLEM = 1;
 SOLVE = 1;
-SAMPLE = 0;
-PLOT = 0;
+SAMPLE = 1;
+PLOT = 1;
 
 if PROBLEM
 rng(33, 'twister')
 %% generate samples
+A_true = [-1 4; -1 -0.3];
 % A_true = [-1 1; -1 -0.3];
-f_true = @(t, x) [x(2); -x(1) + (1/3).* x(1).^3 - x(2)]*x;
+f_true = @(t, x) A_true*x;
 
 Nsample = 50;
 % Nsample = 40;
@@ -24,7 +25,7 @@ Tmax = 5;
 epsilon = 2.5;
 sample = struct('t', Tmax, 'x', @() box_lim*(2*rand(2,1)-1));
 
-
+% [observed] = corrupt_observations(Nsample,sample, f_true, epsilon);
 
 %% generate model
 t = sdpvar(1, 1);
@@ -37,6 +38,7 @@ observed = DG.corrupt_observations(Nsample, f_true, epsilon);
 
 [w_handle, box]= DG.make_sampler(W);
 
+w = sdpvar(size(W.A, 2), 1);
 end
  
 %% Solve SOS program
@@ -59,6 +61,7 @@ if SOLVE
     lsupp.t = t;
     lsupp.TIME_INDEP = 0;
     lsupp.x = x;
+    lsupp.w = w;
     lsupp = lsupp.set_box(box_lim);
     lsupp.X = struct('ineq', 2*box_lim^2 - sum(x.^2), 'eq', []);
     % lsupp = lsupp.set_box(3);
@@ -70,24 +73,12 @@ if SOLVE
 
     lsupp.verbose = 1;
 
-%     objective = x(1);
-
-    Ru = 0.3;
-    Cu = [0; -0.5];
-    c1f = Ru^2 - sum((x-Cu).^2);
-%     c2f = -diff(x-Cu);
-
-    theta_c = 5*pi/4;
-    w_c = [cos(theta_c); sin(theta_c)];
-    c2f = w_c(1)*(x(1) - Cu(1)) + w_c(2) * (x(2) - Cu(2)); 
-
-    objective = [c1f; c2f];
+    objective = x(1);
     
     %% start up tester
     PM = peak_sos(lsupp, objective);
 
-%     order = 4;
-    order = 3;
+    order = 4;
     d = 2*order;
 
     % [prog]= PM.make_program(d);
@@ -111,7 +102,6 @@ if SAMPLE
     s_opt.Tmax = lsupp.Tmax;
     s_opt.parallel = 1;
     
-%     Nsample_traj = 10;
     Nsample_traj = 100;
     
     tic
@@ -135,23 +125,17 @@ if PLOT
     PS.nonneg_traj();
     
     PS.state_plot_2(box_lim);
-    if INIT_POINT
-        scatter(C0(1), C0(2), 200, 'k')
-    else
+    viscircles(C0', R0, 'color', 'k', 'LineWidth', 3);
+    
+    if ~INIT_POINT
         theta = linspace(0,2*pi, 200);
         plot(R0*cos(theta)+C0(1), R0*sin(theta)+C0(2), 'color', 'k', 'LineWidth', 3);
     end
     
-    %plot the unsafe set
-    theta_half_range = linspace(theta_c-pi/2, theta_c + pi/2, 200);
-    circ_half = [cos(theta_half_range); sin(theta_half_range)];
-    Xu = Cu + circ_half* Ru;
-    patch(Xu(1, :), Xu(2, :), 'r', 'Linewidth', 3, 'EdgeColor', 'none')
-    
-    %observation plot    
     DG.data_plot_2(observed);
-
+%     viscircles(C0', R0, 'color', 'k', 'LineWidth', 3);
     
+    %observation plot
     
 end
 

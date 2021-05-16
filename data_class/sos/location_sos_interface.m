@@ -20,6 +20,10 @@ classdef location_sos_interface < handle
             obj.opts = opts;
             obj.vars = struct('t', opts.t, 'x', opts.x);
             
+            if ~isempty(opts.w)
+                obj.vars.w = opts.w;
+            end
+            
             if isempty(obj.opts.t) && ~opts.TIME_INDEP
                 obj.opts.t = sdpvar(1, 1);
             end
@@ -83,7 +87,7 @@ classdef location_sos_interface < handle
             zeta = [];
             coeff_zeta = [];
             
-            if ~isempty(obj.opts.W) && ~isempty(obj.opts.w)
+            if ~isempty(obj.opts.W) && isempty(obj.opts.w)
 
                 m = length(obj.opts.W.b);
                 d_altern = d;
@@ -165,7 +169,7 @@ classdef location_sos_interface < handle
                 %'isempty(obj.opts.fw)'
                 Lv0 = dvdx*(scale_weight*F) + jacobian(v, t);
                 
-                [cons_lie, coeff_lie] =  obj.make_psatz(d, F, poly.alpha-Lv0, [t;x;w]);
+                [cons_lie, coeff_lie] =  obj.make_psatz(d, XF, poly.alpha-Lv0, [t;x;w]);
 %                 constraint_psatz(-Lv0, Xall, [t;x], d);
                 cons_lie = cons_lie:'Lie with variable w';
                 
