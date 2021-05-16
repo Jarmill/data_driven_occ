@@ -2,8 +2,8 @@
 
 %break up the sections here into functions
 
-PROBLEM = 1;
-SOLVE = 1;
+PROBLEM = 0;
+SOLVE = 0;
 SAMPLE = 1;
 PLOT = 1;
 
@@ -112,7 +112,7 @@ if SAMPLE
     s_opt.Tmax = lsupp.Tmax;
     s_opt.parallel = 1;
     
-%     Nsample_traj = 
+%     Nsample_traj = 10;
     Nsample_traj = 100;
     
     tic
@@ -135,25 +135,24 @@ if PLOT
     PS.v_plot();
     PS.nonneg_traj();
     
-    PS.state_plot_2(box_lim);
-    if INIT_POINT
-        scatter(C0(1), C0(2), 200, 'k')
-    else
-        theta = linspace(0,2*pi, 200);
-        plot(R0*cos(theta)+C0(1), R0*sin(theta)+C0(2), 'color', 'k', 'LineWidth', 3);
-    end
-    
-    %plot the unsafe set
-    theta_half_range = linspace(theta_c-pi/2, theta_c + pi/2, 200);
-    circ_half = [cos(theta_half_range); sin(theta_half_range)];
-    Xu = Cu + circ_half* Ru;
-    patch(Xu(1, :), Xu(2, :), 'r', 'Linewidth', 3, 'EdgeColor', 'none')
-    
-    
-    DG.data_plot_2(observed);
-%     viscircles(C0', R0, 'color', 'k', 'LineWidth', 3);
-    
-    %observation plot
+%     PS.state_plot_2(box_lim);
+%     if INIT_POINT
+%         scatter(C0(1), C0(2), 200, 'k')
+%     else
+%         theta = linspace(0,2*pi, 200);
+%         plot(R0*cos(theta)+C0(1), R0*sin(theta)+C0(2), 'color', 'k', 'LineWidth', 3);
+%     end
+%     
+%     %plot the unsafe set
+%     theta_half_range = linspace(theta_c-pi/2, theta_c + pi/2, 200);
+%     circ_half = [cos(theta_half_range); sin(theta_half_range)];
+%     Xu = Cu + circ_half* Ru;
+%     patch(Xu(1, :), Xu(2, :), 'r', 'Linewidth', 3, 'EdgeColor', 'none')
+%     
+%     %observation plot    
+%     DG.data_plot_2(observed);
+% 
+%     
     
 end
 

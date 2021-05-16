@@ -304,17 +304,21 @@ classdef location_sos_interface < handle
             %nonnegative evaluation
             [cnn,mnn] = coefficients(poly_var.nonneg,[poly_var.t; poly_var.x]);
             nn_eval = value(cnn)*mnn;
+
+            %the replacement call to scale time by Tmax is expensive (in
+            %computational time)
+            %scale by Tmax in traj_eval instead
             
-            if obj.opts.TIME_INDEP
-                v0 = v_eval;
-            else
-                %scale by time
-                v_eval = replace(v_eval, poly_var.t, poly_var.t/obj.opts.Tmax);
-                zeta_eval = replace(zeta_eval, poly_var.t, poly_var.t/obj.opts.Tmax);
-%                 v0 = replace(v_eval, t, 0);            
-                nn_eval = replace(nn_eval, poly_var.t, poly_var.t/obj.opts.Tmax);
-            end
-            
+%             if obj.opts.TIME_INDEP
+%                 v0 = v_eval;
+%             else
+%                 %scale by time
+%                 v_eval = replace(v_eval, poly_var.t, poly_var.t/obj.opts.Tmax);
+%                 zeta_eval = replace(zeta_eval, poly_var.t, poly_var.t/obj.opts.Tmax);
+% %                 v0 = replace(v_eval, t, 0);            
+%                 nn_eval = replace(nn_eval, poly_var.t, poly_var.t/obj.opts.Tmax);
+%             end
+%             
             
             %do not scale by time here            
             poly_eval = struct('v', v_eval, 'zeta', zeta_eval, 'nonneg', nn_eval);

@@ -1,15 +1,19 @@
 function [out_sim] = traj_eval(out, out_sim)
 %TRAJ_EVAL evaluate functions over all trajectories in out_sim
 
+Tmax = out.dynamics.Tmax;
+% Tmax = 1;
 
-nonneg_func = @(t,x)cell2mat(arrayfun(@(i)out.func.nonneg([t(i),x(i, :)]),...
+nonneg_func = @(t,x)cell2mat(arrayfun(@(i)out.func.nonneg([t(i)/Tmax,x(i, :)]),...
     (1:length(t)),'UniformOutput',false));
 
 cost_func = @(t, x) arrayfun(@(i)out.func.cost(x(i,:)),...    
     (1:length(t)));
 
-v_func = @(t,x) arrayfun(@(i)out.func.v([t(i),x(i,:)]),...
+v_func = @(t,x) arrayfun(@(i)out.func.v([t(i)/Tmax,x(i,:)]),...
     (1:length(t)));
+
+
 
 
 for i = 1:length(out_sim)
