@@ -1,11 +1,11 @@
-classdef peak_sos_plotter < plotter_sos_interface
-    %PEAK_SOS_PLOTTER Plotter for peak estimation
+classdef reach_sos_plotter < plotter_sos_interface
+    %PEAK_SOS_PLOTTER Plotter for Reachable Set Estimation
     %   Detailed explanation goes here
     
     
     
     methods
-        function obj = peak_sos_plotter(out, out_sim)
+        function obj = reach_sos_plotter (out, out_sim)
             %PEAK_SOS_PLOTTER Construct an instance of this class
             %   Detailed explanation goes here
             obj = obj@plotter_sos_interface(out, out_sim);
@@ -70,7 +70,7 @@ classdef peak_sos_plotter < plotter_sos_interface
             
             
             %implicit curves
-            syms y [3, 1];
+            syms y [2, 1];
             cy = obj.out.func.cost(y) - obj.out.obj;
             fimplicit3(cy + 1e-8*sum(y), limits,  'r', 'HandleVisibility', 'Off', 'FaceAlpha', 0.5, 'EdgeColor', 'None')
         end

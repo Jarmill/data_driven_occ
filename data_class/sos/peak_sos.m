@@ -1,5 +1,5 @@
 classdef peak_sos < location_sos_interface
-    %LOCATION_PEAK_SOS location handle for peak estimation
+    %PEAK_SOS location handle for peak estimation
     % includes maximin objectives for safety margins
     
     properties
@@ -8,7 +8,7 @@ classdef peak_sos < location_sos_interface
     
     methods
         function obj = peak_sos(opts, p)
-            %LOCATION_PEAK_SOS Construct an instance of this class
+            %PEAK_SOS Construct an instance of this class
             %opts:  loc_sos_options data structure
             %p:     an array of sdpvars defining the objective to maximize
             obj@location_sos_interface(opts);
@@ -122,7 +122,7 @@ classdef peak_sos < location_sos_interface
         end
         
         
-        function objective = get_objective(obj, poly_var)
+        function objective = get_objective(obj, poly_var, d)
             %fetch the SOS objective to minimize
             objective = poly_var.gamma;
             
@@ -143,13 +143,6 @@ classdef peak_sos < location_sos_interface
             %call the cost
             func_eval.cost_all= polyval_func(obj.p, obj.vars.x);
             func_eval.cost = @(x) min(func_eval.cost_all(x));
-        end
-        
-        function dynamics = package_dynamics(obj, func_in)
-            %package up dynamics for use in the (old) sampler
-            %peak/sampler
-            dynamics = package_dynamics@location_sos_interface(obj, func_in);                                                
-            
         end
         
        
