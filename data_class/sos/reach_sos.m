@@ -40,8 +40,8 @@ classdef reach_sos < location_sos_interface
             
             
             %package up the constraints
-            coeff = [coeff_lie; coeff_term; coeff_init];
-            con = [con_lie; con_term; con_init];
+            coeff = [coeff_init; coeff_lie; coeff_term];
+            con = [con_init; con_lie; con_term];
             nonneg = [nonneg_init; nonneg_term; nonneg_lie];
         end
         
@@ -66,7 +66,7 @@ classdef reach_sos < location_sos_interface
             
             %add terms to polynomial storage structure
             poly_out.w = w;            
-            
+            poly_out.cw = cw;
             coeff_out = [coeff_out; cw];
             
         end
@@ -95,7 +95,7 @@ classdef reach_sos < location_sos_interface
             coeff = [coeff_term; coeff_w];
             con = [con_term:'terminal w', con_w:'nonneg w'];            
             
-            nonneg = term_pos;
+            nonneg = [term_pos; poly.w];
         end
     
         
@@ -135,10 +135,10 @@ classdef reach_sos < location_sos_interface
         %integral of w(x) w.r.t. lebesgue measure
             mom_leb = obj.mom_handle(d);
             
-            [cw, mw] = coefficients(poly_var.w);
+%             [cw, mw] = coefficients(poly_var.w, poly_var.x);
             
             
-            objective = cw'*mom_leb;                        
+            objective = poly_var.cw'*mom_leb;                        
         end    
         
         function [poly_val, func_eval] = recover_poly(obj, poly_var)

@@ -141,6 +141,10 @@ if PLOT
     PS.state_plot_3(box_lim);
     if INIT_POINT
         scatter3(C0(1), C0(2), C0(3), 200, 'ok')
+    else
+        [Xs, Ys, Zs] = sphere(50);
+        surf(Xs*R0 + C0(1),Ys*R0 + C0(2),Zs*R0 + C0(3), 'EdgeColor', 'None',...
+            'FaceColor', 'k', 'FaceAlpha', 0.4)
     end
 %     viscircles(C0', R0, 'color', 'k', 'LineWidth', 3);
     

@@ -20,7 +20,7 @@ classdef reach_sos_plotter < plotter_sos_interface
             %no other switching present, so there is only one system for
             %the occupation measure
             
-            if obj.FREE_TERMINAL
+            if obj.out.func.FREE_TIME
                 ax_label= {'$-v(t,x)$', '$w(t,x) + v(t,x)-1$', '$w(t,x)$', '$-L_{f0} v(t,x) - b^T \zeta(t,x)$'};
             else
                 ax_label= {'$-v(t,x)$', '$w(x) + v(T,x)-1$', '$w(x)$', '$-L_{f0} v(t,x) - b^T \zeta(t,x)$'};
@@ -63,9 +63,9 @@ classdef reach_sos_plotter < plotter_sos_interface
             
             
             %implicit curves
-            if ~obj.out.func.FREE_TERMINAL
+            if ~obj.out.func.FREE_TIME
                 syms y [2, 1];
-                wy = obj.out.func.w(y) - 1;
+                wy = obj.out.func.w([0;y]) - 1;
     %             cy = obj.out.func.cost(y) - obj.out.obj;
                 fimplicit(wy, limits,  'r', 'HandleVisibility', 'Off', 'LineWidth', 2)
             end
@@ -80,11 +80,11 @@ classdef reach_sos_plotter < plotter_sos_interface
             
             
             %implicit curves
-            if ~obj.out.func.FREE_TERMINAL
-                syms y [2, 1];
-                wy = obj.out.func.w(y) - 1;
+            if ~obj.out.func.FREE_TIME
+                syms y [3, 1];
+                wy = obj.out.func.w([0;y]) - 1;
     %             cy = obj.out.func.cost(y) - obj.out.obj;
-                fimplicit3(wy + 1e-8*sum(y), limits,  'r', 'HandleVisibility', 'Off', 'FaceAlpha', 0.5, 'EdgeColor', 'None')
+                fimplicit3(wy + 1e-8*sum(y), limits,  'r', 'HandleVisibility', 'Off', 'FaceAlpha', 0.3, 'EdgeColor', 'None')
             end
             
         end

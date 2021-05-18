@@ -38,7 +38,7 @@ classdef plotter_sos_interface < handle
 
             end
             
-            plot(xlim, [1;1]*obj.out.poly.gamma, '--r', 'LineWidth', 3)
+%             plot(xlim, [1;1]*obj.out.poly.gamma, '--r', 'LineWidth', 3)
             xlabel('time', 'FontSize', obj.FS_axis)
             ylabel('$v(t,x)$', 'interpreter', 'latex', 'FontSize', obj.FS_axis);
             title('Auxiliary Function', 'FontSize', obj.FS_title);   

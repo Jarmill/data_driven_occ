@@ -7,13 +7,13 @@ Tmax = out.dynamics.Tmax;
 nonneg_func = @(t,x)cell2mat(arrayfun(@(i)out.func.nonneg([t(i)/Tmax,x(i, :)]),...
     (1:length(t)),'UniformOutput',false));
 
-if out.FREE_TERMINAL
-w_func = @(t, x) arrayfun(@(i)out.func.w(t(i), x(i,:)),...    
+% if out.func.FREE_TIME
+w_func = @(t, x) arrayfun(@(i)out.func.w([t(i)/Tmax, x(i,:)]),...    
     (1:length(t)));
-else
-    w_func = @(t, x) arrayfun(@(i)out.func.w(x(i,:)),...    
-    (1:length(t)));
-end
+% else
+%     w_func = @(t, x) arrayfun(@(i)out.func.w(x(i,:)),...    
+%     (1:length(t)));
+% end
 
 v_func = @(t,x) arrayfun(@(i)out.func.v([t(i)/Tmax,x(i,:)]),...
     (1:length(t)));
