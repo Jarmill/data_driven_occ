@@ -216,9 +216,17 @@ classdef data_generator
             D = A_scale ./ repmat(b_scale,[1 size(A_scale,2)]);
             %number of points in dual polytope's convex hull capped at the
             %number of constraints
-            [k, vol] = convhulln(D);
-            % record which constraints generate points on the convex hull
-            nr = unique(k(:));
+            
+            if size(A_scale, 2) == 1
+                %maximum and minimum on interval
+                [A_max, ind_max] = max(D);
+                [A_min, ind_min] = min(D);
+                nr = [ind_max; ind_min];
+            else
+                [k, vol] = convhulln(D);
+                % record which constraints generate points on the convex hull
+                nr = unique(k(:));
+            end
 %             A_scale_orig = A_scale;
 %             b_scale_orig = b_scale;
             
