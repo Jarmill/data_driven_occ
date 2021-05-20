@@ -112,7 +112,7 @@ classdef data_generator
             
 %             nx =length(vars);
             f0 = zeros(nx, 1);
-            fw = kron(eye(nx), monolist(vars, dmin, dmax)');         
+            fw = kron(eye(nx), monolist(vars, dmax, dmin)');         
             model = struct('f0', f0, 'fw', fw);
         end
         

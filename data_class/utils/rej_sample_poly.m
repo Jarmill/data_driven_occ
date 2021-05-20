@@ -1,6 +1,6 @@
 function w = rej_sample_poly(A, b, box)
 %REJ_SAMPLE_POLY Rejection sampling to generate uniformly-distributed 
-%data inside a convex polytope
+%data inside a convex polytope A w <= b
 %
 %go to hit and run later
 
