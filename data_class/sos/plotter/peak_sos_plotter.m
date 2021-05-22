@@ -78,7 +78,7 @@ classdef peak_sos_plotter < plotter_sos_interface
         
         function F = v_plot(obj)
             %add the gamma upper bound to the peak v plot
-            F = v_plot@(plotter_sos_interface(obj);
+            F = v_plot@plotter_sos_interface(obj);
             subplot(2, 1, 1)
             plot(xlim, [1;1]*obj.out.poly.gamma, '--r', 'LineWidth', 3)
         end

@@ -57,6 +57,11 @@ W.A = W.A(:, [2,1]);
 [model_cheb,W_cheb] = DG.center_cheb(model, W);
 W_red = DG.reduce_constraints(W_cheb);
 
+W_red_2 = DG.reduce_constraints_linprog(W_cheb);
+
+
+[length(W_red.b), length(W_red_2.b)]
+
 [w_handle, box]= DG.make_sampler(W_red);
 
 

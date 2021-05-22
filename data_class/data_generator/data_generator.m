@@ -203,9 +203,39 @@ classdef data_generator
             W_cheb = struct('A', A_scale, 'b', b_scale);
 
         end
+  
         
+        function W_reduced = reduce_constraints(obj, W_in)
+            
+            d = size(W_in.A, 2);
+            if d > 6
+                W_reduced = obj.reduce_constraints_linprog(W_in);
+            else
+                W_reduced = obj.reduce_constraints_hull(W_in);
+            end
+                
+        end
         
-        function [W_reduced] = reduce_constraints(obj, W_in)
+        function [W_reduced] = reduce_constraints_linprog(obj, W_in)
+            %identify redundant constraints
+            %solve a linear program for almost every constraint
+            
+            A_scale = W_in.A;
+            b_scale = W_in.b;
+            
+            %first pass
+            [A_red, b_red] = nontrivial_constraints(A_scale, b_scale);
+            
+            %second pass, better numerical accuracy
+            [A_red2, b_red2] = nontrivial_constraints(A_red, b_red);
+            
+            W_reduced = struct('A', A_red2, 'b', b_red2);
+            
+
+        end
+  
+        
+        function [W_reduced] = reduce_constraints_hull(obj, W_in)
             %identify redundant constraints
             %code from noredund.m by Michael Kleder (2006)
             
@@ -262,12 +292,15 @@ classdef data_generator
         
         %% plot vector fields
         
-        function F = data_plot_2(obj, observed)
+        function F = data_plot_2(obj, observed, scale)
+            if nargin < 3
+                scale = 1;
+            end
             F=figure(2);
             clf
             hold on
-            quiver(observed.x(1, :), observed.x(2, :), observed.xdot_true(1, :), observed.xdot_true(2, :))
-            quiver(observed.x(1, :), observed.x(2, :), observed.xdot_noise(1, :), observed.xdot_noise(2, :))
+            quiver(observed.x(1, :), observed.x(2, :), scale*observed.xdot_true(1, :), scale*observed.xdot_true(2, :), 'autoscale','off')
+            quiver(observed.x(1, :), observed.x(2, :), scale*observed.xdot_noise(1, :), scale*observed.xdot_noise(2, :), 'autoscale','off')
             axis square
             legend({'Ground Truth', 'Noisy Data'}, 'FontSize', 12, 'location', 'northwest')
             xlabel('$x_1$', 'interpreter', 'latex', 'FontSize', 12);
@@ -276,12 +309,16 @@ classdef data_generator
         end
         
         
-        function F = data_plot_3(obj, observed)
+        function F = data_plot_3(obj, observed, scale)
+            
+            if nargin < 3
+                scale = 1;
+            end
             F=figure(2);
             clf
             hold on
-            quiver3(observed.x(1, :), observed.x(2, :),observed.x(3, :), observed.xdot_true(1, :), observed.xdot_true(2, :),observed.xdot_true(3, :))
-            quiver3(observed.x(1, :), observed.x(2, :),observed.x(3, :), observed.xdot_noise(1, :), observed.xdot_noise(2, :),observed.xdot_noise(3, :))
+            quiver3(observed.x(1, :), observed.x(2, :),observed.x(3, :), scale*observed.xdot_true(1, :), scale*observed.xdot_true(2, :),scale*observed.xdot_true(3, :), 'autoscale','off')
+            quiver3(observed.x(1, :), observed.x(2, :),observed.x(3, :), scale*observed.xdot_noise(1, :), scale*observed.xdot_noise(2, :),scale*observed.xdot_noise(3, :), 'autoscale','off')
             axis square
             legend({'Ground Truth', 'Noisy Data'}, 'FontSize', 12, 'location', 'northwest')
             xlabel('$x_1$', 'interpreter', 'latex', 'FontSize', 12);

@@ -42,7 +42,9 @@ ind_cull(D_slack_cull) = 0;
 ind_cull(I_oct) = 1;
 % ind_cull = setdiff(find(D_slack_cull), I_oct);
 
+D_cull = D(ind_cull, :);
 
+Kcull = convhulln(D_cull);
 
 %this culling did not work
 
