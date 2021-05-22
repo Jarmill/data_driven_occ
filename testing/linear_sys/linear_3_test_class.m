@@ -3,14 +3,15 @@
 %break up the sections here into functions
 
 PROBLEM = 1;
-SOLVE = 1;
+SOLVE = 0;
 SAMPLE = 0;
 PLOT = 0;
 
 
 %sample data only from initial set
-C0 = [-1; 0; 0];
-R0 = 0.2;
+% C0 = [-1; 0; 0];
+C0 = [1; 1; 1];
+R0 = 0.4;
 x0_sample_ball = @() R0*ball_sample(1,3)'+C0;
 
 INIT_SAMPLE_ONLY = 0;
@@ -19,25 +20,30 @@ if PROBLEM
 rng(33, 'twister')
 %% generate samples
 % A_true = [-1 4; -1 -0.3];
-A_true = [-1 4 1; -1 -0.3 1; -1 1 -1];
-% A_true = [-1 1; -1 -0.3];
-f_true = @(t, x) A_true*x;
+a = 1;
+b = 1;
+G0 = 2;
+f_true = @(t,x) [a*x(1) + b*x(2) + x(3) - 2*x(2)^2;
+    a*x(2) - b*x(1) + 2*x(1)*x(2);
+    -G0*x(3) - 2*x(1)*x(3)];
 
+
+box_lim = [-4, 0.5, 0; 3, 3.6, 4]';
 
 % Nsample = 150;
-Nsample = 100;
+% Nsample = 100;
 % Nsample = 50;
 % Nsample = 40;
-% Nsample = 30;
+Nsample = 30;
 % Nsample = 20;
 % Nsample = 10;
 % Nsample = 4;
-box_lim = 2;
+% box_lim = 2;
 Tmax = 5;
-% epsilon = 1;
+epsilon = 1;
 % epsilon = 2;
-epsilon = 3;
-sample = struct('t', Tmax, 'x', @() box_lim*(2*rand(3,1)-1));
+% epsilon = 3;
+sample = struct('t', Tmax, 'x', @() box_lim(:, 1) + (box_lim(:,2) - box_lim(:,1)).*rand(3,1));
 if INIT_SAMPLE_ONLY
     sample.x = x0_sample_ball;
 end
@@ -51,7 +57,7 @@ x = sdpvar(3, 1);
 DG = data_generator(sample);
 
 observed = DG.corrupt_observations(Nsample, f_true, epsilon);
-[model, W] = DG.reduced_model(observed, x, 1, 1);
+[model, W] = DG.reduced_model(observed, x, 0, 2);
 
 [w_handle, box]= DG.make_sampler(W);
 
