@@ -1,0 +1,8 @@
+load('three_wave_data.mat', 'W_cheb');
+
+rng(33, 'twister')
+A_scale = W_cheb.A;
+b_scale = W_cheb.b;
+d = size(A_scale, 2)
+
+w = sdpvar(
