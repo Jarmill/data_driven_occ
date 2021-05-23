@@ -3,9 +3,10 @@
 %break up the sections here into functions
 
 PROBLEM = 1;
-SOLVE = 1;
-SAMPLE = 1;
-PLOT = 1;
+SOLVE = 0;
+SAMPLE = 0;
+EVAL = 0;
+PLOT = 0;
 
 if PROBLEM
 rng(35, 'twister')
@@ -43,7 +44,7 @@ observed = DG.corrupt_observations(Nsample, f_true, epsilon);
 % [model, W] = DG.reduced_model(observed, x, 1, 1);
 % model = DG.poly_model(vars, 3);
 mlist = monolist(x, 3);
-model = struct('f0', [1;0], 'fw', [zeros(1, length(mlist)); mlist']);
+model = struct('f0', [x(2);0], 'fw', [zeros(1, length(mlist)); mlist']);
 
 W = DG.data_cons(model, x, observed);
 [model_cheb,W_cheb] = DG.center_cheb(model, W);
@@ -77,7 +78,7 @@ if SOLVE
     lsupp.TIME_INDEP = 0;
     lsupp.x = x;
 %     lsupp.X = struct('ineq', 2*box_lim^2
-%     lsupp = lsupp.set_box(box_lim);
+    lsupp = lsupp.set_box(box_lim*sqrt(2));
     lsupp.X = struct('ineq', 2*box_lim^2 - sum(x.^2), 'eq', []);
     % lsupp = lsupp.set_box(3);
     lsupp.X_init = X0;
@@ -107,8 +108,8 @@ if SOLVE
     %% start up tester
     PM = peak_sos(lsupp, objective);
 
-%     order = 4;
-    order = 2;
+    order = 4;
+%     order = 3;
     d = 2*order;
 
     % [prog]= PM.make_program(d);
@@ -138,9 +139,15 @@ if SAMPLE
     tic
     out_sim = sampler(out.dynamics, Nsample_traj, s_opt);
 
-    out_sim = traj_eval(out, out_sim);
-
     sample_time = toc;
+end
+
+if EVAL
+    load('flow_pt_sim.mat');
+end
+
+if EVAL || SAMPLE
+    out_sim = traj_eval(out, out_sim);
 end
 
 %% plot trajectories
