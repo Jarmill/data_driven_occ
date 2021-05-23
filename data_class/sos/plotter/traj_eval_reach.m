@@ -21,7 +21,7 @@ v_func = @(t,x) arrayfun(@(i)out.func.v([t(i)/Tmax,x(i,:)]),...
 
 
 
-for i = 1:length(out_sim)
+parfor i = 1:length(out_sim)
     osc = out_sim{i};
     N = length(osc.t);
     

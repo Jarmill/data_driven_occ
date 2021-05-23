@@ -66,7 +66,7 @@ f_true = @(t,x) [a*x(1) + b*x(2) + x(3) - 2*x(2)^2;
     a*x(2) - b*x(1) + 2*x(1)*x(2);
     -G0*x(3) - 2*x(1)*x(3)];
 
-model.f0 = [x(3)-2*x(2)^2; 2*x(1)*x(2); - 2*x(1)*x(3)];
+model.f0 = [-2*x(2)^2; 2*x(1)*x(2); - 2*x(1)*x(3)];
 % model.fw = [x(1), x(2), 0; x(2), -x(1), 0; 0, 0, x(3)];
 model.fw = kron(x', eye(3));
 W_orig = DG.data_cons(model, x, observed);

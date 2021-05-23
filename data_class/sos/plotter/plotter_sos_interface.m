@@ -157,9 +157,13 @@ classdef plotter_sos_interface < handle
         
         function F = nonneg_zeta(obj)
             %plot the nonnegative slack functions zeta
-            F = figure(21);
             
             Nzeta = length(obj.out.poly.zeta);
+            if Nzeta
+            F = figure(21);
+            clf
+            
+            
             hold on
             for j = 1:length(obj.out_sim)
                 osc = obj.out_sim{j};                    
@@ -171,7 +175,9 @@ classdef plotter_sos_interface < handle
             ylabel(ax_loc_curr , 'interpreter', 'latex', 'FontSize', obj.FS_axis);
             title(['Constraint Slack'], 'FontSize', obj.FS_title);   
             plot(xlim, [0,0], 'k:')
-            
+            else
+                F = [];
+            end
             
         end
     end

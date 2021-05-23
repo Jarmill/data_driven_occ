@@ -375,8 +375,15 @@ classdef location_sos_interface < handle
             %dynamics handle (time-varying polytopic uncertainty called 'd'
             %here)
             dynamics.f0= polyval_func(obj.opts.f0, [obj.vars.t; obj.vars.x]);
-            dynamics.fw = polyval_func(obj.opts.fw, [obj.vars.t; obj.vars.x]);
-            dynamics.f = {@(t,x,w,d,b) dynamics.f0([t; x]) + dynamics.fw([t; x])*d};
+%             
+            if isempty(obj.opts.fw)
+                dynamics.fw = @(vars_in) zeros(size(obj.vars.x));
+                dynamics.f = {@(t,x,w,d,b) dynamics.f0([t; x])};
+            else
+                dynamics.fw = polyval_func(obj.opts.fw, [obj.vars.t; obj.vars.x]);
+                dynamics.f = {@(t,x,w,d,b) dynamics.f0([t; x]) + dynamics.fw([t; x])*d};
+            end
+            
             
         end
         

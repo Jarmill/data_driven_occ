@@ -1,3 +1,0 @@
-Flow model 
-x1' = x2
-x2' = cubic(x1, x2)

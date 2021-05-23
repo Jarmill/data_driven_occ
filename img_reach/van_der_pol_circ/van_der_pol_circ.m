@@ -12,7 +12,7 @@ rng(33, 'twister')
 %% generate samples
 % A_true = [-1 4; -1 -0.3];
 % A_true = [-1 1; -1 -0.3];
-f_true = @(t, x) [2*x(2); -0.8*x(1) - 10*(x(1)^2 - 0.21)*x(2)];
+f_true = @(t, x) [x(2); -0.4*x(1) - 5*(x(1)^2 - 0.21)*x(2)];
 
 Nsample = 150;
 % Nsample = 50;
@@ -20,10 +20,10 @@ Nsample = 150;
 % Nsample = 30;
 % Nsample = 20;
 % Nsample = 4;
-box_lim = 2;
+box_lim = 1.2;
 % box_lim = 1;
 % Tmax = 5;
-Tmax = 3;
+Tmax = 6;
 epsilon = 0.01;
 % epsilon = 1;
 % epsilon = 2;
@@ -52,6 +52,10 @@ W_red = DG.reduce_constraints(W_cheb);
 
 [w_handle, box]= DG.make_sampler(W);
 
+
+ W = [];
+ model.f0 = f_true(t, x);
+ model.fw = [];
 end
  
 %% Solve SOS program
@@ -59,9 +63,9 @@ if SOLVE
     
     %start at a single point
 
-%     C0 = [0; 0.5];
-    C0 = [-1; 0];
-    R0 = 0.2;
+    C0 = [0; 0.5];
+%     C0 = [0; 0];
+    R0 = 0.1;
     INIT_POINT = 0;
     if INIT_POINT
         X0 = C0;
@@ -73,7 +77,7 @@ if SOLVE
     lsupp.t = t;    
     lsupp.x = x;
     lsupp = lsupp.set_box(box_lim);
-    lsupp.X = struct('ineq', 2*box_lim^2 - sum(x.^2), 'eq', []);
+%     lsupp.X = struct('ineq', box_lim^2 - sum(x.^2), 'eq', []);
     % lsupp = lsupp.set_box(3);
     lsupp.X_init = X0;
     lsupp.f0 = model.f0;
@@ -85,17 +89,18 @@ if SOLVE
     
     %% moments of lebesgue distribution
     box_supp = box_process(2, box_lim);
-%     mom_handle = @(d) LebesgueBoxMom(d, box_supp', 1);
+    mom_handle = @(d) LebesgueBoxMom(d, box_supp', 1);
 
-    mom_handle = @(d) LebesgueSphereMom(monpowers(2, d), sqrt(2)*box_lim);
+%     mom_handle = @(d) LebesgueSphereMom(monpowers(2, d), sqrt(2)*box_lim);
     
     
     %% start up tester
     PM = reach_sos(lsupp, mom_handle);
 
 %     order = 4;
-    order = 5;
-    d = 2*order;
+%     order = 5;
+    order = 7;
+%     d = 2*order;
 
     % [prog]= PM.make_program(d);
     % out = PM.solve_program(prog)
@@ -119,7 +124,7 @@ if SAMPLE
     s_opt.parallel = 1;
   
 %     Nsample_traj = 16;
-    Nsample_traj = 100;
+    Nsample_traj = 104;
     
     tic
     out_sim = sampler(out.dynamics, Nsample_traj, s_opt);

@@ -2,10 +2,10 @@
 
 %break up the sections here into functions
 
-PROBLEM = 0;
+PROBLEM = 1;
 SOLVE = 0;
-SAMPLE = 1;
-PLOT = 1;
+SAMPLE = 0;
+PLOT = 0;
 
 
 %sample data only from initial set
