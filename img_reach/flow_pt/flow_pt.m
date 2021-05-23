@@ -100,8 +100,8 @@ if SOLVE
     %% start up tester
     PM = reach_sos(lsupp, mom_handle);
 
-    order = 5;
-%     order = 3;
+%     order = 5;
+    order = 3;
     d = 2*order;
 
     % [prog]= PM.make_program(d);

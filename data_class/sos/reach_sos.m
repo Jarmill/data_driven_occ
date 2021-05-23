@@ -79,14 +79,14 @@ classdef reach_sos < location_sos_interface
             
             if obj.FREE_TIME
                 Xall = obj.opts.get_all_supp();
-                vT = replace(poly.v, obj.vars.t, 1);
-                term_pos = vT + poly.w - 1;
+                term_pos = poly.v + poly.w - 1;                
                 [con_term, coeff_term] = obj.make_psatz(d, Xall, term_pos, [poly.t; poly.x]);
                 [con_w, coeff_w] = obj.make_psatz(d, Xall, poly.w, [poly.t; poly.x]);
             else
                 Xall = obj.opts.get_X();
-                term_pos = poly.v + poly.w - 1;
-                [con_term, coeff_term] = obj.make_psatz(d, Xall, term_pos, [poly.t; poly.x]);
+                vT = replace(poly.v, obj.vars.t, 1);
+                term_pos = vT + poly.w - 1;
+                [con_term, coeff_term] = obj.make_psatz(d, Xall, term_pos, [poly.x]);
                 [con_w, coeff_w] = obj.make_psatz(d, Xall, poly.w, [poly.x]);
             end                        
             

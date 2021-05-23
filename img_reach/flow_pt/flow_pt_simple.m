@@ -98,7 +98,7 @@ if SOLVE
     PM = reach_sos(lsupp, mom_handle);
 
     order = 6;
-%     order = 3;
+%     order = 5;
     d = 2*order;
 
     % [prog]= PM.make_program(d);
