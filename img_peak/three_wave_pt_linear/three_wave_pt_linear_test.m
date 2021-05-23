@@ -2,7 +2,7 @@
 
 %break up the sections here into functions
 
-PROBLEM = 0;
+PROBLEM = 1;
 SOLVE = 1;
 SAMPLE = 1;
 PLOT = 1;
@@ -26,8 +26,8 @@ f_true = @(t,x) [a*x(1) + b*x(2) + x(3) - 2*x(2)^2;
     a*x(2) - b*x(1) + 2*x(1)*x(2);
     -G0*x(3) - 2*x(1)*x(3)];
 
-Nsample = 150;
-% Nsample = 100;
+% Nsample = 150;
+Nsample = 100;
 % Nsample = 50;
 % Nsample = 40;
 % Nsample = 30;
@@ -35,8 +35,8 @@ Nsample = 150;
 % Nsample = 10;
 % Nsample = 4;
 box_lim = [-4, 0.5, 0; 3, 3.6, 4]';
-[box_out, box_center, box_half] = box_process(3, box_lim)
-Tmax = 5;
+[box_out, box_center, box_half] = box_process(3, box_lim);
+Tmax = 3;
 epsilon = 1;
 % epsilon = 2;
 % epsilon = 2.5;
@@ -56,12 +56,19 @@ DG = data_generator(sample);
 
 observed = DG.corrupt_observations(Nsample, f_true, epsilon);
 % model = DG.poly_model(x, 0,2);
-mlist23 = monolist(x, 2, 0);
-mlist2 = monolist(x(1:2), 2, 0);
-mlist3 = monolist(x([1,3]), 2, 0);
-model.f0 = [0;0;0];
+% mlist23 = monolist(x, 2, 0);
+% mlist2 = monolist(x(1:2), 2, 0);
+% mlist3 = monolist(x([1,3]), 2, 0);
+% model.f0 = [0;0;0];
 % model.fw = blkdiag(mlist23, mlist2, mlist3)';
-model.fw = blkdiag(mlist23, mlist23, mlist23)';
+% model.fw = blkdiag(mlist23, mlist23, mlist23)';
+f_true = @(t,x) [a*x(1) + b*x(2) + x(3) - 2*x(2)^2;
+    a*x(2) - b*x(1) + 2*x(1)*x(2);
+    -G0*x(3) - 2*x(1)*x(3)];
+
+model.f0 = [x(3)-2*x(2)^2; 2*x(1)*x(2); - 2*x(1)*x(3)];
+% model.fw = [x(1), x(2), 0; x(2), -x(1), 0; 0, 0, x(3)];
+model.fw = kron(x', eye(3));
 W_orig = DG.data_cons(model, x, observed);
 W = W_orig;
 
@@ -102,7 +109,7 @@ if SOLVE
     lsupp.TIME_INDEP = 0;
     lsupp.x = x;
     lsupp = lsupp.set_box(box_lim);
-    lsupp.X = struct('ineq',  1 - ((x - box_center).^2) ./ (box_half.^2), 'eq', []);
+    lsupp.X = struct('ineq',  3 - sum(((x - box_center).^2) ./ (box_half.^2)), 'eq', []);
     % lsupp = lsupp.set_box(3);
     lsupp.X_init = X0;
     lsupp.f0 = model.f0;
@@ -112,12 +119,12 @@ if SOLVE
 
     lsupp.verbose = 1;
 
-    objective = x(1);
+    objective = x(2);
     
     %% start up tester
     PM = peak_sos(lsupp, objective);
 
-    order = 2;
+    order = 3;
     d = 2*order;
 
     % [prog]= PM.make_program(d);
@@ -173,6 +180,7 @@ if PLOT
         surf(Xs*R0 + C0(1),Ys*R0 + C0(2),Zs*R0 + C0(3), 'EdgeColor', 'None',...
             'FaceColor', 'k', 'FaceAlpha', 0.4)
     end
+    view(80, 30)
 %     viscircles(C0', R0, 'color', 'k', 'LineWidth', 3);
     
 %     if ~INIT_POINT
@@ -180,7 +188,7 @@ if PLOT
 %         plot(R0*cos(theta)+C0(1), R0*sin(theta)+C0(2), 'color', 'k', 'LineWidth', 3);
 %     end
     
-    DG.data_plot_3(observed, 0.3);
+    DG.data_plot_3(observed, 0.1);
 %     viscircles(C0', R0, 'color', 'k', 'LineWidth', 3);
     
     %observation plot
