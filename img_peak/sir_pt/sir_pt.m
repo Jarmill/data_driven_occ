@@ -1,5 +1,5 @@
-%data driven reachable set estimation of a linear system
-
+%data driven peak estimation estimation of SIR system
+%assume beta and gamma unknown
 %break up the sections here into functions
 
 PROBLEM = 1;

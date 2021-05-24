@@ -1,17 +1,17 @@
-%data driven peak estimation of a linear system
+% data driven peak estimation of a linear system
 
-%break up the sections here into functions
+% break up the sections here into functions
 
 PROBLEM = 1;
-SOLVE = 1;
-SAMPLE = 1;
-EVAL = 1;
-PLOT = 1;
+SOLVE = 0;
+SAMPLE = 0;
+EVAL = 0;
+PLOT = 0;
 
 if PROBLEM
 rng(35, 'twister')
-%% generate samples
-% A_true = [-1 1; -1 -0.3];
+% generate samples
+A_true = [-1 1; -1 -0.3];
 f_true = @(t, x) [x(2); -x(1) + (1/3).* x(1).^3 - x(2)];
 
 % 
@@ -27,14 +27,13 @@ Tmax = 5;
 % epsilon = [0; 2.5];
 % epsilon = [0; 1];
 epsilon = [0; 0.5];
+% epsilon = 0.5;
 
-% [-0.3, 1.75])
-%     ylim([-1,0.5])
 sample = struct('t', Tmax, 'x', @() box_lim*(2*rand(2,1)-1));
 
 
 
-%% generate model
+% generate model
 t = sdpvar(1, 1);
 x = sdpvar(2, 1);
 
@@ -43,7 +42,7 @@ DG = data_generator(sample);
 observed = DG.corrupt_observations(Nsample, f_true, epsilon);
 % [model, W] = DG.reduced_model(observed, x, 1, 1);
 % model = DG.poly_model(vars, 3);
-mlist = monolist(x, 3);
+% mlist = monolist(x, 3);
 model = struct('f0', [x(2); (1/3).* x(1).^3 - x(2)], 'fw', [0; -x(1)]);
 
 W = DG.data_cons(model, x, observed);
