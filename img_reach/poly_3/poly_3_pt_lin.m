@@ -2,11 +2,11 @@
 
 %break up the sections here into functions
 
-PROBLEM = 1;
+PROBLEM = 0;
 SOLVE = 0;
 SAMPLE = 0;
-EVAL = 0;
-PLOT = 0;
+EVAL = 1;
+PLOT = 1;
 
 
 %sample data only from initial set
@@ -128,7 +128,8 @@ if SOLVE
 %     PM = peak_sos(lsupp, objective);
     box_supp = box_process(3, box_lim);
     mom_handle = @(d) LebesgueBoxMom(d, box_supp', 1);
-    PM = reach_sos(lsupp, mom_handle);
+%     PM = reach_sos(lsupp, mom_handle);
+    PM = reach_sos(lsupp, mom_handle, 1);
 
 
     order = 3;
@@ -137,7 +138,7 @@ if SOLVE
     % [prog]= PM.make_program(d);
     % out = PM.solve_program(prog)
     out = PM.run(order);
-    
+    save('poly_3_lin_3_posz.mat', 'W', 'out')
 end
 
 %% Sample trajectories
@@ -155,7 +156,7 @@ elseif SAMPLE
     s_opt.Nd = size(model.fw, 2);
     
     s_opt.Tmax = lsupp.Tmax;
-    s_opt.parallel = 0;
+    s_opt.parallel = 1;
     
     Nsample_traj = 104;
 %     Nsample_traj = 16;
@@ -190,7 +191,8 @@ if PLOT
         scatter3(C0(1), C0(2), C0(3), 200, 'ok')
     end
     
-    view(80, 5)
+%     view(80, 5)
+view(-120, 23)
     
 %     viscircles(C0', R0, 'color', 'k', 'LineWidth', 3);
     

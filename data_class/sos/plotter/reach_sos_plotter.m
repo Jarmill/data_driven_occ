@@ -80,12 +80,12 @@ classdef reach_sos_plotter < plotter_sos_interface
             
             
             %implicit curves
-            if ~obj.out.func.FREE_TIME
+%             if ~obj.out.func.FREE_TIME
                 syms y [3, 1];
                 wy = obj.out.func.w([0;y]) - 1;
     %             cy = obj.out.func.cost(y) - obj.out.obj;
                 fimplicit3(wy + 1e-8*sum(y), limits,  'r', 'HandleVisibility', 'Off', 'FaceAlpha', 0.3, 'EdgeColor', 'None')
-            end
+%             end
             
         end
 

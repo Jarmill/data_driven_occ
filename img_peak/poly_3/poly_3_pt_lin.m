@@ -3,10 +3,10 @@
 %break up the sections here into functions
 
 PROBLEM = 1;
-SOLVE = 0;
+SOLVE = 1;
 SAMPLE = 0;
-EVAL = 0;
-PLOT = 0;
+EVAL = 1;
+PLOT = 1;
 
 
 %sample data only from initial set
@@ -128,13 +128,14 @@ if SOLVE
     %% start up tester
     PM = peak_sos(lsupp, objective);
 
-    order = 2;
+    order = 3;
     d = 2*order;
 
     % [prog]= PM.make_program(d);
     % out = PM.solve_program(prog)
     out = PM.run(order);
     
+    save('poly_3_lin_3_posz.mat', 'W', 'out')
 end
 
 %% Sample trajectories
