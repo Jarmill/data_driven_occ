@@ -90,7 +90,7 @@ if SOLVE
     lsupp = lsupp.set_box(box_lim);
     lsupp = lsupp.set_box(1);
 %     lsupp.X = struct('ineq', 3*box_lim^2 - sum(x.^2), 'eq', []);
-    lsupp.X = struct('ineq', [1-x(1)^2; 1-x(2)^2; x(3)], 'eq', []);
+    lsupp.X = struct('ineq', [1-x(1)^2; 1-x(2)^2; x(3)*(1-x(3))], 'eq', []);
     lsupp.X_init = X0;
     lsupp.f0 = f_true(0, x);
 %     lsupp.f0 = model.f0;

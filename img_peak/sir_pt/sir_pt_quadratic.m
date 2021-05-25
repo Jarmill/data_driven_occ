@@ -3,7 +3,7 @@
 
 %break up the sections here into functions
 
-PROBLEM = 0;
+PROBLEM = 1;
 SOLVE = 1;
 SAMPLE = 1;
 PLOT = 1;

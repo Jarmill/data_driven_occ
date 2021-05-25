@@ -113,7 +113,7 @@ if SOLVE
     lsupp = lsupp.set_box(1);
 %     lsupp.X = struct('ineq', 3*box_lim^2 - sum(x.^2), 'eq', []);
 %     lsupp.X = struct('ineq', box_lim^2 - x.^2, 'eq', []);
-    lsupp.X = struct('ineq', [1-x(1)^2; 1-x(2)^2; x(3)], 'eq', []);
+    lsupp.X = struct('ineq', [1-x(1)^2; 1-x(2)^2; x(3)*(1-x(3))], 'eq', []);
     
     lsupp.X_init = X0;
 

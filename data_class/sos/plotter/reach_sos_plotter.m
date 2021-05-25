@@ -89,6 +89,9 @@ classdef reach_sos_plotter < plotter_sos_interface
             
         end
 
+        function obj_plot(obj)
+            %objective is not recognized for reachable set
+        end
         
         
 %         function F = w_plot(obj)
