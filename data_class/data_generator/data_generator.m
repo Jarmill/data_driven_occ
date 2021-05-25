@@ -287,7 +287,8 @@ classdef data_generator
         function [w_handle, box] = make_sampler(obj, W)
             %use rejection sampling to sample points from a polytope
             box = poly_bounding_box(W.A,W.b);
-            w_handle = @() rej_sample_poly(W.A, W.b, box);
+%             w_handle = @() rej_sample_poly(W.A, W.b, box);
+            w_handle = @() cprnd(1, W.A, W.b)';
         end
         
         %% plot vector fields

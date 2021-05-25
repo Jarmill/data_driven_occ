@@ -11,12 +11,14 @@ if nargin <= 2
 end
 
 done = 0;
+iter = 0;
 while ~done
     w = rand(n, 1).*(box(:, 2)-box(:, 1)) + box(:, 1);
     
     if all(A*w <= b)
         done = 1;
     end
+    iter = iter + 1;
 end
 
 
