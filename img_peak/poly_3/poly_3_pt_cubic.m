@@ -2,9 +2,9 @@
 
 %break up the sections here into functions
 
-PROBLEM = 1;
-SOLVE = 1;
-SAMPLE = 1;
+PROBLEM = 0;
+SOLVE = 0;
+SAMPLE = 0;
 EVAL = 0;
 PLOT = 1;
 
@@ -154,7 +154,7 @@ elseif SAMPLE
     s_opt.Nd = size(model.fw, 2);
     
     s_opt.Tmax = lsupp.Tmax;
-    s_opt.parallel = 0;
+    s_opt.parallel = 1;
     
     Nsample_traj = 104;
 %     Nsample_traj = 16;
