@@ -5,8 +5,8 @@
 PROBLEM = 1;
 SOLVE = 1;
 SAMPLE = 0;
-EVAL = 1;
-PLOT = 1;
+EVAL = 0;
+PLOT = 0;
 
 
 %sample data only from initial set
@@ -128,7 +128,10 @@ if SOLVE
     %% start up tester
     PM = peak_sos(lsupp, objective);
 
-    order = 3;
+%     order = 1; %1.000
+% order = 2; %1.000
+%     order = 3; %0.819
+% order = 4;
     d = 2*order;
 
     % [prog]= PM.make_program(d);

@@ -19,7 +19,7 @@ function pfunc = polyval_func(poly, vars)
         varnames_old = sdisplay(vars);
         varnames_new = cell(length(vars), 1);
         for i = 1:length(vars)
-            varnames_new{i} = ['varnew(', num2str(i), ')'];
+            varnames_new{i} = ['varnew(', num2str(i),  ', :)'];
         end
         
         sjoin = '[';
@@ -44,7 +44,10 @@ function pfunc = polyval_func(poly, vars)
         
         for i = 1:length(vars)
             sjoin = strrep(sjoin, varnames_old{i}, varnames_new{i});
+
         end
+        sjoin = strrep(sjoin, '^', '.^');
+        sjoin = strrep(sjoin, '*', '.*');
         
         pfunc = eval([var_pre, sjoin]);
     end

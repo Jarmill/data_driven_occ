@@ -35,8 +35,8 @@ epsilon = [0; 0.5];
 
 
 % INIT_SAMPLER
-sample = struct('t', Tmax, 'x', @() box_lim*(2*rand(2,1)-1));
-% sample = struct('t', Tmax, 'x', @() C0 + R0*ball_sample(1,2)');
+% sample = struct('t', Tmax, 'x', @() C0);
+sample = struct('t', Tmax, 'x', @() C0 + R0*ball_sample(1,2)');
 
 
 
@@ -94,42 +94,22 @@ if SOLVE
 
     lsupp.verbose = 1;
 
-%     objective = x(1);
-
-%     Ru = 0.3;
-%     Cu = [0; -0.5];
-%     c1f = Ru^2 - sum((x-Cu).^2);
-% %     c2f = -diff(x-Cu);
-% 
-%     theta_c = 5*pi/4;
-%     w_c = [cos(theta_c); sin(theta_c)];
-%     c2f = w_c(1)*(x(1) - Cu(1)) + w_c(2) * (x(2) - Cu(2)); 
-% 
-%     objective = [c1f; c2f];
-
     objective = -x(2);
 
 
     %% start up tester
     PM = peak_sos(lsupp, objective);
 
-        %point initial set
 %     order = 1; %2.8284
-%     order = 2; %2.4480
-%     order = 3;  1.0184%
-    order = 4;  %
-    
-%     %circle initial set
-% %     order = 1; %2.8284
-%     order = 2; %2.5569
-% %     order = 3;  %1.2453
-% %     order = 4;  %0.8944
+%     order = 2; %2.8284
+    order = 3;  %
+%     order = 4;  %
 
     d = 2*order;
 
     % [prog]= PM.make_program(d);
     % out = PM.solve_program(prog)
-    out = PM.run(order);
+    out = PM.run(order);   
     
 end
 

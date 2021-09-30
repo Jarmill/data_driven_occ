@@ -2,11 +2,11 @@
 
 %break up the sections here into functions
 
-PROBLEM = 0;
-SOLVE = 0;
+PROBLEM =1;
+SOLVE = 1;
 SAMPLE = 0;
 EVAL = 0;
-PLOT = 1;
+PLOT = 0;
 
 
 %sample data only from initial set
@@ -130,7 +130,9 @@ if SOLVE
     %% start up tester
     PM = peak_sos(lsupp, objective);
 
-    order = 3;
+%     order = 1; %1.000
+%     order = 2; %0.9050
+    order = 3;%0.8174
     d = 2*order;
 
     % [prog]= PM.make_program(d);

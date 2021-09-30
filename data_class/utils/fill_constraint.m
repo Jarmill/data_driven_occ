@@ -2,6 +2,7 @@ function [con_out] = fill_constraint(con_in)
 %EMPTY_CONSTRAINT
 %con_in should be a struct with fields 'ineq' and 'eq'
 %add them if they are missing
+%Author: Jared Miller (last edited 6/28/21)
     con_out = con_in;
     if isempty(con_in) || ~isa(con_in, 'struct')
         con_out = struct('ineq', [], 'eq', []);
