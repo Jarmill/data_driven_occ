@@ -14,7 +14,6 @@ rng(35, 'twister')
 % A_true = [-1 1; -1 -0.3];
 f_true = @(t, x) [x(2); -x(1) + (1/3).* x(1).^3 - x(2)];
 
-% 
 % Nsample = 100;
 % Nsample = 50;
 Nsample = 40;
@@ -100,8 +99,8 @@ if SOLVE
     %% start up tester
     PM = reach_sos(lsupp, mom_handle);
 
-    order = 5;
-%     order = 4;
+%     order = 5;
+    order = 4;
     d = 2*order;
 
     % [prog]= PM.make_program(d);

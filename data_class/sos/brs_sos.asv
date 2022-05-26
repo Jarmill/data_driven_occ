@@ -1,43 +1,40 @@
-classdef reach_sos < location_sos_interface
-    %REACH_SOS location handle for reachable set estimation
-    %includes fixed-time and free-time reachable set
+classdef brs_sos < location_sos_interface
+    %BRS_SOS location handle for backwards reachable (BRS) set estimation 
+    %given an external control process. Equivalent to control design for 
+    %region of attraction maximization (ROA)
+    
+    %free terminal time is NOT included here.
+    
     
     
     properties
         mom_handle;     %a function mom_handle(d) computing moments of the 
-                        %lebesgue distribution on X (or [0,T]times X for 
-                        %free terminal time) from order 0...d
-        FREE_TIME;      %free terminal time (1) or fixed terminal time Tmax (0)
-        
+                        %lebesgue distribution on X from order 0...d        
     end
     
     methods
-        function obj = reach_sos(opts, mom_handle, FREE_TIME)
-            %REACH_SOS Construct an instance of this class
+        function obj = brs_sos(opts, mom_handle)
+            %BRS_SOS Construct an instance of this class
             %opts:      loc_sos_options data structure
-            %mom_handle:function handle for Lebesgue moments
-            %FREE_TIME: fixed or free terminal time
+            %mom_handle:function handle for Lebesgue moments            
             obj@location_sos_interface(opts);
             obj.mom_handle = mom_handle;
-            if nargin == 2
-                obj.FREE_TIME = 0;
-            else
-                obj.FREE_TIME = FREE_TIME;
-            end
         end
         
         function [coeff, con, nonneg] = make_cons(obj, d, poly)
-            %MAKE_CONS create the constraints that define the problem
+            %METHOD1 Summary of this method goes here
             %   Detailed explanation goes here
             
             %lie derivative constraint
-            [coeff_lie, con_lie, nonneg_lie] = obj.make_lie_con(d, poly);            
+            [coeff_lie, con_lie, nonneg_lie] = obj.make_lie_con(d, poly);
+            
             
             %objective constraint (terminal)
             [coeff_term, con_term, nonneg_term] = obj.make_term_con(d, poly);
             
             %initial constraint in v0
             [coeff_init, con_init, nonneg_init] = obj.make_init_con(d, poly);
+            
             
             %package up the constraints
             coeff = [coeff_init; coeff_lie; coeff_term];
@@ -58,11 +55,8 @@ classdef reach_sos < location_sos_interface
             t = obj.opts.t;
             x = obj.opts.x;
             
-            if obj.FREE_TIME
-                [w, cw] = polynomial([t;x],d);
-            else
-                [w, cw] = polynomial(x, d);
-            end                                    
+            [w, cw] = polynomial(x, d);
+                                 
             
             %add terms to polynomial storage structure
             poly_out.w = w;            
@@ -71,26 +65,20 @@ classdef reach_sos < location_sos_interface
             
         end
         
-        function [coeff, con, nonneg] = make_term_con(obj, d, poly)
+        function [coeff, con, nonneg] = make_init_con(obj, d, poly)
             %Constraint on terminal measure
             %w(x) is an indicator function
             %w(x) + v(T,x) >= 1 on X
             
             
-            if obj.FREE_TIME
-                Xall = obj.opts.get_all_supp();
-                term_pos = poly.v + poly.w - 1;                
-                [con_term, coeff_term] = obj.make_psatz(d, Xall, term_pos, [poly.t; poly.x]);
-                [con_w, coeff_w] = obj.make_psatz(d, Xall, poly.w, [poly.t; poly.x]);
-            else
-                Xall = obj.opts.get_X();
-                vT = replace(poly.v, obj.vars.t, 1);
-                term_pos = vT + poly.w - 1;
-                [con_term, coeff_term] = obj.make_psatz(d, Xall, term_pos, [poly.x]);
-                [con_w, coeff_w] = obj.make_psatz(d, Xall, poly.w, [poly.x]);
-            end                        
-            
-            
+
+            Xall = obj.opts.get_X();
+            vT = replace(poly.v, obj.vars.t, 1);
+            term_pos = vT + poly.w - 1;
+            [con_term, coeff_term] = obj.make_psatz(d, Xall, term_pos, [poly.x]);
+            [con_w, coeff_w] = obj.make_psatz(d, Xall, poly.w, [poly.x]);                   
+
+
             
             coeff = [coeff_term; coeff_w];
             con = [con_term:'terminal w', con_w:'nonneg w'];            
@@ -99,27 +87,27 @@ classdef reach_sos < location_sos_interface
         end
     
         
-        function [coeff, con, nonneg] = make_init_con(obj, d, poly)
-            %Constraint on initial measure
-            %auxiliary function v(0,x) is nonpositive on X0
+        function [coeff, con, nonneg] = make_term_con(obj, d, poly)
+            %Constraint on terminal measure
+            %auxiliary function v(T,x) is nonpositive on X0
             
             X0 = prep_space_cell(obj.opts.X_init);
             
             coeff = [];
             con = [];
             nonneg = [];
-            init_pos = -poly.v0;
+            init_pos = -poly.vT;
             for i = 1:length(X0)
                 [con_curr, coeff_curr] = obj.make_psatz(d, X0{i}, init_pos, poly.x);
                 
                 if length(X0) == 1
-                    init_tag = 'initial';
+                    term_tag = 'terminal';
                 else
-                    init_tag = ['initial ', num2str(i)];
+                    term_tag = ['terminal ', num2str(i)];
                 end
                 
                 coeff = [coeff; coeff_curr];
-                con   = [con; con_curr:init_tag];
+                con   = [con; con_curr:term_tag];
 %                 nonneg = [nonneg; init_pos];
 
                 %the nonnegative function should hold for all time
@@ -135,8 +123,6 @@ classdef reach_sos < location_sos_interface
         %integral of w(x) w.r.t. lebesgue measure
             mom_leb = obj.mom_handle(d);
             
-%             [cw, mw] = coefficients(poly_var.w, poly_var.x);
-            
             
             objective = poly_var.cw'*mom_leb;                        
         end    
@@ -145,16 +131,10 @@ classdef reach_sos < location_sos_interface
             %recover polynomials from SOS certificate            
             [poly_val, func_eval] = recover_poly@location_sos_interface(obj, poly_var);
                
-            func_eval.FREE_TIME = obj.FREE_TIME;
-            if obj.FREE_TIME
-                [cw,mw] = coefficients(poly_var.w,[poly_var.t; poly_var.x]);                                
-            else
-                [cw,mw] = coefficients(poly_var.w, poly_var.x);
-            end
+           [cw,mw] = coefficients(poly_var.w, poly_var.x);
             w_eval = value(cw)'*mw;    
             
             poly_val.w = w_eval;
-%             if obj.FREE_TIME
             func_eval.w = polyval_func(w_eval, [poly_var.t; poly_var.x]);               
         end
         
