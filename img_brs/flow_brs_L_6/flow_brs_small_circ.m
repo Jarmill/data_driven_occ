@@ -1,7 +1,7 @@
 %data driven region of attraction maximizing control of a flow system
 
-PROBLEM = 1;
-SOLVE = 1;
+PROBLEM = 0;
+SOLVE = 0;
 PLOT = 1;
 
 if PROBLEM
@@ -38,7 +38,7 @@ W.b = [bsym; bsym];
 end
 
 if SOLVE
-    CT = [0.75; 0];
+    CT = [0.5; 0.5];
 %     CT = [1; 0];
 %     CT = [0; 0];
     RT = 0.1;
@@ -71,7 +71,8 @@ if SOLVE
 %     order = 2;
 %     order = 3;
 %     order = 4;
-    order = 5;
+%     order = 5;
+    order = 6;
     d = 2*order;
 
     % [prog]= PM.make_program(d);
@@ -85,11 +86,10 @@ end
 if PLOT
     
     figure(11)
-    fsurf(@(x1,x2) out.func.w([zeros(size(x1)); x1; x2]), reshape(box_lim', 1, []), 'r',  'LineWidth', 2)
+    clf    
+%     figure(10)
+    sp1=subplot(1,2,1);
     
-    
-    figure(10)
-    clf
     theta = linspace(0, 2*pi, 201);
     hold on
     circ = [cos(theta); sin(theta)]*RT + CT;
@@ -107,8 +107,16 @@ if PLOT
     ylabel('$x_2$', 'interpreter', 'latex', 'Fontsize', 14)
     title(sprintf('Order %d Region of Attraction', order), 'fontsize', 16)
 
-%     fcontour(@(x1,x2) out.func.w([zeros(size(x1)); x1; x2])-1, reshape(box_lim', 1, []))
     
+    sp2=subplot(1, 2, 2);
+    colormap('autumn')
+    fsurf(@(x1,x2) out.func.w([zeros(size(x1)); x1; x2]), reshape(box_lim', 1, []), 'r',  'LineWidth', 2)
+    xlabel('$x_1$', 'interpreter', 'latex', 'Fontsize', 14)
+    ylabel('$x_2$', 'interpreter', 'latex', 'Fontsize', 14)
+    zlabel('$\phi(x)$','interpreter', 'latex', 'Fontsize', 14)
+%     fcontour(@(x1,x2) out.func.w([zeros(size(x1)); x1; x2])-1, reshape(box_lim', 1, []))
+    title(sprintf('Indicator Approximation', order), 'fontsize', 16)
+    pbaspect([1,1,0.8])
 end
 %set: -umax <= u <= umax,  -umax <= u1 - u2 <= umax
 
