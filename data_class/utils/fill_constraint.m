@@ -4,15 +4,19 @@ function [con_out] = fill_constraint(con_in)
 %add them if they are missing
 %Author: Jared Miller (last edited 6/28/21)
     con_out = con_in;
-    if isempty(con_in) || ~isa(con_in, 'struct')
+    if isempty(con_in)
         con_out = struct('ineq', [], 'eq', []);
-    end
+    end        
     
-    if ~isfield(con_in, 'ineq')
-        con_out.ineq = [];
-    end
-    
-    if ~isfield(con_in, 'eq')
-        con_out.eq = [];
+    if  ~isa(con_in, 'struct')
+        con_out = struct('ineq', con_in, 'eq', []);
+    else        
+        if ~isfield(con_in, 'ineq')
+            con_out.ineq = [];
+        end
+
+        if ~isfield(con_in, 'eq')
+            con_out.eq = [];
+        end
     end
 end
