@@ -56,9 +56,9 @@ classdef peak_sos_plotter < plotter_sos_interface
             
             
             %implicit curves
-            syms y [2, 1];
-            cy = obj.out.func.cost(y) - obj.out.obj;
-            fimplicit(cy + 1e-8*sum(y), limits,  '--r', 'HandleVisibility', 'Off', 'LineWidth', 2)
+%             syms y [2, 1];
+%             cy = obj.out.func.cost(y) - obj.out.obj;
+%             fimplicit(cy + 1e-8*sum(y), limits,  '--r', 'HandleVisibility', 'Off', 'LineWidth', 2)
         end
 
         function F = state_plot_3(obj, box_lim)
