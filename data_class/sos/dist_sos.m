@@ -31,11 +31,11 @@ classdef dist_sos < location_sos_interface
             %now define new terms
             gamma = sdpvar(1,1);
             
-            if length(obj.p)>1
-                beta = sdpvar(length(obj.p), 1);
-            else
+%             if length(obj.p)>1
+%                 beta = sdpvar(length(obj.p), 1);
+%             else
                 beta = [];
-            end
+%             end
             
             %add terms to polynomial storage structure
             poly_out.gamma = gamma;
@@ -114,7 +114,7 @@ classdef dist_sos < location_sos_interface
             [con_term, coeff_term] = obj.make_psatz(d, X_Xu, term_pos, [poly.x; poly.y]);
             
             coeff = [coeff_term];
-            con = [con_term:'dist'; con_beta];
+            con = [con_term:'dist'];
             
             nonneg = term_pos;
         end

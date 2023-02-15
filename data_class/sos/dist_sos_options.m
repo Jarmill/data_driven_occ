@@ -13,17 +13,17 @@ classdef dist_sos_options < loc_sos_options
     
     methods
         function Xsupp = get_Xu(obj)
-            Xsupp = obj.Xu;
+            Xsupp = obj.X_unsafe;
         end
         
         function Xsupp = get_X_Xu(obj)
-            Xsupp = struct('ineq', [obj.X.ineq; obj.Xu.ineq], ...
-                'eq', [obj.X.eq; obj.Xu.eq]);                       
+            Xsupp = struct('ineq', [obj.X.ineq; obj.X_unsafe.ineq], ...
+                'eq', [obj.X.eq; obj.X_unsafe.eq]);                       
         end
         
         function c_out = dist(obj)
             if isempty(obj.c)
-                c_out = (obj.x-obj.y).^2;
+                c_out = sum((obj.x-obj.y).^2);
             else
                 c_out = obj.c;
             end
