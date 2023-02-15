@@ -3,9 +3,9 @@
 %break up the sections here into functions
 
 PROBLEM = 1;
-SOLVE = 1;
-SAMPLE = 0;
-PLOT = 0;
+SOLVE = 0;
+SAMPLE = 1;
+PLOT = 1;
 
 if PROBLEM
 rng(33, 'twister')
@@ -51,6 +51,7 @@ if DATA_DRIVEN
     %order2: 0.193576151666294
     %order3: 0.200364187374125
     %order4: 0.200965666044131
+    %order5: 0.201360421158720 (1629.92 sec)
     
 else
 % %simple single source of uncertainty
@@ -130,7 +131,8 @@ Ru = 0.5;
     %% start up tester
     PM = dist_sos(lsupp);
 
-    order = 4;
+    order = 5;
+%     order = 4;
 % order=3; %
 %     order = 2; % 
 %     order = 1;
