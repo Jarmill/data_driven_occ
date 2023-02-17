@@ -12,10 +12,12 @@ vars = [t; x];
 % w = 0.5;
 
 %solving parameters
-% order = 1; %
+% order = 1; %1
 % order =2; % 1
-% order =3; % 1
-order = 4;%
+% order =3; % 0.8952
+% order = 4;%0.8477
+order = 5;
+
 d = 2*order;
 
 A0 = eye(3);
@@ -60,8 +62,10 @@ X0 = C0;
 %dynamics
 f0 = Tmax * [x(2); -x(1)-x(2)+(x(1)^3)/3];
 % f1 = Tmax * [0; -0.3*x(1)];
-w_scale = 0.25;
-fw = w_scale*[0, 0, 0; x(1), x(1)*x(2), x(2)];
+% w_scale = 0.25;
+% w_scale = 0.02;
+% w_scale = 0; %TODO: bugchecker
+fw = Tmax*w_scale*[0, 0, 0; x(1), x(1)*x(2), x(2)];
 
 %% Build Polynomials
 %auxiliary function and bounds
@@ -94,7 +98,7 @@ Lvcon = -Lv0 - sum(A0.*Z, 'all');
 %equality constraints
 con_eq = [];
 for i = 1:3
-    ccurr = coefficients(sum(A{i}.*Z) - jacobian(v, x)*fw(:, i), [t; x]);
+    ccurr = coefficients(sum(A{i}.*Z, 'all') - jacobian(v, x)*fw(:, i), [t; x]);
     con_eq = [con_eq; ccurr ==0];
 end
 % Xf = struct('ineq', [Tsupp.ineq; Xsupp.ineq; Wsupp.ineq], 'eq', []);
@@ -133,7 +137,7 @@ coeff_list = [coeff_list; coeff0; coefff; coeffc; Gramvar; coeffZ];
 opts = sdpsettings('solver', 'mosek');
 opts.sos.model = 2;
 
-[sol, monom, Gram, residual] = solvesos(cons, gamma, opts, coeff_list);
+[sol, monom, Gram_solve, residual] = solvesos(cons, gamma, opts, coeff_list);
 peak_val = value(gamma);
 
 fprintf('peak bound %0.4f\n', peak_val)
