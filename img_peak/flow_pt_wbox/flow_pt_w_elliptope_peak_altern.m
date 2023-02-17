@@ -16,7 +16,8 @@ vars = [t; x];
 % order =2; % 1
 % order =3; % 0.8952
 % order = 4;%0.8477
-order = 5; %0.8471
+% order = 5; %0.8471
+order=6; %0.8470 Gram matrix max size 252, 140.18 minutes to solve
 
 d = 2*order;
 
