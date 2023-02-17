@@ -16,7 +16,7 @@ vars = [t; x];
 % order =2; % 1
 % order =3; % 0.8952
 % order = 4;%0.8477
-order = 5;
+order = 5; %0.8471
 
 d = 2*order;
 

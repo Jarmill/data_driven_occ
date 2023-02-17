@@ -184,7 +184,7 @@ if PLOT
     pval = 0.847110477840935;
     plot(xlim, -pval*[1; 1], 'r--', 'LineWidth', 2);
 
-    title(sprintf('Order 5 Elliptope Bound=%0.4f', -pval), 'fontsize', 16)
+    title('Order 5 Robust 
     
 end
 
