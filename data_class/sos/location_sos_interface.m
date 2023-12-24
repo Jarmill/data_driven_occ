@@ -33,8 +33,8 @@ classdef location_sos_interface < handle
             end
 
             if opts.DISCRETE_TIME && isempty(obj.opts.w)
-                xt = sdpvar(length(obj.x), 1);
-                opts.xt = xt;
+                xt = sdpvar(length(obj.vars.x), 1);
+                obj.vars.xt = xt;
             end
 
             
@@ -98,8 +98,10 @@ classdef location_sos_interface < handle
 
                 m = length(obj.opts.W.b);
                 d_altern = d;
+                d_altern_mu = d;
                 for i = 1:size(obj.opts.fw, 2)
                     d_altern = max((2*ceil(d/2 + degree(obj.opts.fw(:, i))/2-1)), d_altern); %figure out degree bounds later
+                    d_altern_mu = min(d_altern_mu, d-degree(obj.opts.fw(:, i)));
                 end
 
                 for i = 1:m
@@ -113,7 +115,7 @@ classdef location_sos_interface < handle
                     mu = [];
                     coeff_mu = [];
                     for i = 1:length(x)
-                        [pmu, cmu] = polynomial([x; xt], d_altern);
+                        [pmu, cmu] = polynomial([x; xt], d_altern_mu);
                         mu = [mu; pmu];
                         coeff_mu = [coeff_mu; cmu];
                     end
@@ -128,18 +130,14 @@ classdef location_sos_interface < handle
             if (obj.opts.TIME_INDEP && (obj.opts.Tmax < Inf)) || obj.opts.DISCRETE_TIME
                 alpha = sdpvar(1,1);
                 coeff_alpha = alpha;
-                if obj.opts.DISCRETE_TIME
-                    poly_alpha = obj.opts.Tmax*alpha;
-                else
-                    poly_alpha = alpha;
-                end
+
             else
                 alpha = 0;
                 coeff_alpha = [];
-                poly_alpha = alpha;
+
             end
             
-            poly_out=struct('v', v, 'zeta', zeta, 'mu', mu, 't', t, 'x', x, 'xt', xt, 'v0', v0, 'alpha', poly_alpha);
+            poly_out=struct('v', v, 'zeta', zeta, 'mu', mu, 't', t, 'x', x, 'xt', xt, 'v0', v0, 'alpha', alpha);
             coeff_out = [cv; coeff_zeta;coeff_alpha;coeff_mu];
         end
         
@@ -363,6 +361,7 @@ classdef location_sos_interface < handle
         
             t = poly_var.t;
             x = poly_var.x;
+            xt = poly_var.xt;
             n = length(poly_var.x);
             
             %solved coefficients of v and zeta
@@ -371,15 +370,26 @@ classdef location_sos_interface < handle
             
             %remember to scale by time 
             
-            [cz, mz] = coefficients(poly_var.zeta,[poly_var.t; poly_var.x]);
+            [cz, mz] = coefficients(poly_var.zeta,[poly_var.t; poly_var.x; poly_var.xt]);
             if n == 1
                 zeta_eval = value(cz)'*mz;
             else
                 zeta_eval = value(cz)*mz;
-            end                     
+            end                   
+
+            if obj.opts.DISCRETE_TIME
+                [cm, mm] = coefficients(poly_var.mu,[poly_var.t; poly_var.x; poly_var.xt]);
+                if n == 1
+                    mu_eval = value(cm)'*mm;
+                else
+                    mu_eval = value(cm)*mm;
+                end     
+            else
+                mu_eval = [];
+            end
             
             %nonnegative evaluation
-            [cnn,mnn] = coefficients(poly_var.nonneg,[poly_var.t; poly_var.x]);
+            [cnn,mnn] = coefficients(poly_var.nonneg,[poly_var.t; poly_var.x; poly_var.xt]);
             nn_eval = value(cnn)*mnn;
 
             %the replacement call to scale time by Tmax is expensive (in
@@ -392,8 +402,9 @@ classdef location_sos_interface < handle
             % form functions using helper function 'polyval_func'
             func_eval = struct;
             func_eval.v = polyval_func(v_eval, [t; x]);
-            func_eval.zeta = polyval_func(zeta_eval, [t; x]);       
-            func_eval.nonneg = polyval_func(nn_eval, [t;x; obj.opts.w]);            
+            func_eval.zeta = polyval_func(zeta_eval, [t; x; xt]);       
+            func_eval.mu= polyval_func(mu_eval, [t; x; xt]);       
+            func_eval.nonneg = polyval_func(nn_eval, [t;x; xt; obj.opts.w]);            
         end
     
         function dynamics = package_dynamics(obj, func_in)

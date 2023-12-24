@@ -3,8 +3,8 @@
 PROBLEM = 1;
 SOLVE = 1;
 SAMPLE_TRUE = 0;
-SAMPLE = 0;
-PLOT = 0;
+SAMPLE = 1;
+PLOT = 1;
 
 if PROBLEM
 rng(35, 'twister')
@@ -19,7 +19,7 @@ R0 = 0.4;
 Nsample = 40;
 box_lim = 2;
 Tmax = 10;
-epsilon = 1;
+epsilon = 0.5;
 
 sample = struct('t', Tmax, 'x', @() box_lim*(2*rand(2,1)-1));
 
@@ -48,6 +48,50 @@ end
 INIT_POINT = 1;
 
 if SOLVE
+    if INIT_POINT
+        X0 = C0;
+    else
+        X0 = struct('ineq', R0^2 - sum((x-C0).^2), 'eq', []);
+    end
+
+    objective = -x(2);
+
+    box_lim = 2;
+    lsupp = loc_sos_options();    
+    lsupp.x = x;
+    lsupp.TIME_INDEP = 1;
+    lsupp.DISCRETE_TIME = 1;    
+    % lsupp = lsupp.set_box(box_lim*sqrt(2));
+    lsupp = lsupp.set_box(box_lim);
+    % lsupp.X = struct('ineq', 2*box_lim^2 - sum(x.^2), 'eq', []);
+    % lsupp = lsupp.set_box(3);
+    lsupp.X_init = X0;
+    lsupp.f0 = model.f0;
+    lsupp.fw = model.fw;
+    lsupp.W = W;
+    lsupp.Tmax = Tmax;
+    
+
+    lsupp.verbose = 1;
+
+    %% start up tester
+    PM = peak_sos(lsupp, objective);
+
+
+        %point initial set
+    % order = 1; %sqrt(8)
+    % order = 2; %sqrt(8)
+    order = 3; %1.1992365
+    % order = 4;  
+
+    d = 2*order;
+
+    % [prog]= PM.make_program(d);
+    % out = PM.solve_program(prog)
+    out = PM.run(order);
+    
+else
+    out = [];
 end
 
 if SAMPLE_TRUE
@@ -105,7 +149,6 @@ if SAMPLE
 end
 
 if PLOT
-    out = [];
     PS_true = peak_sos_plotter(out, out_sim_true);
     PS = peak_sos_plotter(out, out_sim);
     PS.state_plot_2_discrete(3);
