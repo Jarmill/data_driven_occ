@@ -82,7 +82,7 @@ if SOLVE
     % order = 1; %2
     % order = 2; %1.7221
     % order = 3; %1.1254
-    order = 4;  
+    order = 4;  %0.9511
 
     d = 2*order;
 
@@ -152,7 +152,7 @@ end
 
 %% plot the result
 if PLOT
-    PS_true = peak_sos_plotter(out, out_sim_true);
+    % PS_true = peak_sos_plotter(out, out_sim_true);
     PS = peak_sos_plotter(out, out_sim);
     PS.state_plot_2_discrete(3);
 
