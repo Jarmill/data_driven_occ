@@ -11,7 +11,8 @@ classdef loc_sos_options
         %terminal time   
         Tmax(1,1) double{mustBePositive}  = 5;   
         TIME_INDEP = 0; %formulation independent of time
-        
+        DISCRETE_TIME = 0; %discrete-time dynamical system
+
         %% Variables and descriptors
         %variables defining sets (array of symbolic variables)
         
@@ -84,6 +85,19 @@ classdef loc_sos_options
             
                 allsupp = struct('ineq', [Tsupp.ineq; Xsupp.ineq], 'eq', Xsupp.eq);
             end
+
+            
+        end
+
+        function allsupp = get_all_discrete(obj, xt)
+            %get the support set X^2 for a discrete-time model
+
+            Xc = obj.get_X;
+            Xt_ineq = replace(Xc.ineq, obj.x, xt);
+            Xt_eq = replace(Xc.eq, obj.x, xt);
+
+            allsupp = struct('ineq', [Xc.ineq; Xt_ineq], 'eq', [Xc.eq; Xt_eq]);
+
         end
         
         function obj = set_box(obj, bounding_box)

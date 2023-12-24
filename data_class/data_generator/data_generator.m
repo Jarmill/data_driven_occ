@@ -309,6 +309,22 @@ classdef data_generator
             title(['Noisy Observations with \epsilon=', sprintf('%0.1f,',observed.epsilon)], 'FontSize', 16)
         end
         
+
+        function F = data_plot_2_discrete(obj, observed, scale)
+            if nargin < 3
+                scale = 1;
+            end
+            F=figure(2);
+            clf
+            hold on
+            quiver(observed.x(1, :), observed.x(2, :), scale*(observed.xdot_true(1, :)-observed.x(1, :)), scale*(observed.xdot_true(2, :)-observed.x(2, :)), 'autoscale','off')
+            quiver(observed.x(1, :), observed.x(2, :), scale*(observed.xdot_noise(1, :)-observed.x(1, :)), scale*(observed.xdot_noise(2, :)-observed.x(2, :)), 'autoscale','off')
+            axis square
+            legend({'Ground Truth', 'Noisy Data'}, 'FontSize', 12, 'location', 'northwest')
+            xlabel('$x_1$', 'interpreter', 'latex', 'FontSize', 12);
+            ylabel('$x_2$', 'interpreter', 'latex', 'FontSize', 12);          
+            title(['Noisy Observations with \epsilon=', sprintf('%0.1f,',observed.epsilon)], 'FontSize', 16)
+        end
         
         function F = data_plot_3(obj, observed, scale)
             

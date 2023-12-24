@@ -117,6 +117,41 @@ classdef plotter_sos_interface < handle
             pbaspect([diff(xlim), diff(ylim), 1])
             
         end
+
+        function [F, limits] = state_plot_2_discrete(obj, box_lim)
+            F = figure(30);
+            clf
+            hold on 
+            for i = 1:length(obj.out_sim)
+                % tcurr = obj.out_sim{i}.t;
+                xcurr = obj.out_sim{i}.x;
+                plot(xcurr(:, 1), xcurr(:, 2), '.c')
+            end
+            
+            %don't mark the initial conditions
+            % for i = 1:length(obj.out_sim)
+            %     % tcurr = obj.out_sim{i}.t;
+            %     xcurr = obj.out_sim{i}.x;
+            %     scatter(xcurr(1, 1), xcurr(1, 2), 100, 'k')
+            % end                        
+            
+            xlabel('$x_1$', 'interpreter', 'latex', 'FontSize', obj.FS_axis);
+            ylabel('$x_2$', 'interpreter', 'latex', 'FontSize', obj.FS_axis);
+            title('Phase Plane', 'FontSize', obj.FS_title);   
+            
+            
+            if (nargin == 2 ) && ~isempty(box_lim)
+                box = box_process(2, box_lim);
+                xlim(box(1, :));
+                ylim(box(2, :));
+                limits = [box(1, :), box(2, :)];
+            else
+                limits = [xlim, ylim];
+            end
+            
+            pbaspect([diff(xlim), diff(ylim), 1])
+            
+        end
  
         function [F, limits] = state_plot_3(obj, box_lim)
             F = figure(30);

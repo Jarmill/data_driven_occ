@@ -9,7 +9,7 @@ classdef location_sos_interface < handle
 
         opts = []; %includes support set
         
-        vars = struct('t', [], 'x', []);
+        vars = struct('t', [], 'x', [], 'xt', []);
         
     end
     
@@ -18,7 +18,7 @@ classdef location_sos_interface < handle
             %LOCATION_SOS_INTERFACE Construct an instance of this class
             %   Detailed explanation goes here
             obj.opts = opts;
-            obj.vars = struct('t', opts.t, 'x', opts.x);
+            obj.vars = struct('t', opts.t, 'x', opts.x, 'xt', []);
             
             if ~isempty(opts.w)
                 obj.vars.w = opts.w;
@@ -31,6 +31,12 @@ classdef location_sos_interface < handle
             if ~isempty(obj.opts.W)
                 obj.opts.W.b = reshape(obj.opts.W.b, [], 1);
             end
+
+            if opts.DISCRETE_TIME && isempty(obj.opts.w)
+                xt = sdpvar(length(obj.x), 1);
+                opts.xt = xt;
+            end
+
             
             
             
@@ -64,8 +70,9 @@ classdef location_sos_interface < handle
             %MAKE_POLY Create polynomials v and zeta for SOS programs
             %subclasses will define further polynomials
             
-            t = obj.opts.t;
-            x = obj.opts.x;
+            t = obj.vars.t;
+            x = obj.vars.x;
+            xt = obj.vars.xt;
             [v, cv] = polynomial([t; x], d);
 
             %every application includes an initial set valuation of v
@@ -96,24 +103,44 @@ classdef location_sos_interface < handle
                 end
 
                 for i = 1:m
-                    [pzeta, czeta] = polynomial([t; x], d_altern);
+                    [pzeta, czeta] = polynomial([t; x; xt], d_altern);
                     zeta = [zeta; pzeta];
                     coeff_zeta = [coeff_zeta; czeta];
+                end
+
+                %discrete-time
+                if obj.opts.DISCRETE_TIME
+                    mu = [];
+                    coeff_mu = [];
+                    for i = 1:length(x)
+                        [pmu, cmu] = polynomial([x; xt], d_altern);
+                        mu = [mu; pmu];
+                        coeff_mu = [coeff_mu; cmu];
+                    end
+                else
+                    mu = [];
+                    coeff_mu = [];
                 end
             end
             
             %TODO: Time-independent with finite time
             
-            if obj.opts.TIME_INDEP && (obj.opts.Tmax < Inf)
+            if (obj.opts.TIME_INDEP && (obj.opts.Tmax < Inf)) || obj.opts.DISCRETE_TIME
                 alpha = sdpvar(1,1);
                 coeff_alpha = alpha;
+                if obj.opts.DISCRETE_TIME
+                    poly_alpha = obj.opts.Tmax*alpha;
+                else
+                    poly_alpha = alpha;
+                end
             else
                 alpha = 0;
                 coeff_alpha = [];
+                poly_alpha = alpha;
             end
             
-            poly_out=struct('v', v, 'zeta', zeta, 't', t, 'x', x, 'v0', v0, 'alpha', alpha);
-            coeff_out = [cv; coeff_zeta;coeff_alpha];
+            poly_out=struct('v', v, 'zeta', zeta, 'mu', mu, 't', t, 'x', x, 'xt', xt, 'v0', v0, 'alpha', poly_alpha);
+            coeff_out = [cv; coeff_zeta;coeff_alpha;coeff_mu];
         end
         
         function [coeff_lie, cons_lie, nonneg_lie] = make_lie_con(obj, d, poly)        
@@ -124,12 +151,14 @@ classdef location_sos_interface < handle
             %polynomials
             v = poly.v;
             zeta = poly.zeta;
+            mu = poly.mu; %for discrete-time only
             
             %variables
             t = obj.vars.t;
             x = obj.vars.x;
-            
-            if obj.opts.scale && ~obj.opts.TIME_INDEP
+            xt = obj.vars.xt; %only for discrete-time systems
+
+            if ~obj.opts.DISCRETE_TIME && obj.opts.scale && ~obj.opts.TIME_INDEP
                 scale_weight = obj.opts.Tmax;
                 obj.opts.f0 = replace(obj.opts.f0, t, scale_weight*t);
                 obj.opts.fw = replace(obj.opts.fw, t, scale_weight*t);
@@ -138,8 +167,12 @@ classdef location_sos_interface < handle
             end
             
 
-            %region of validity [0, T] times X for dynamics
-            Xall = obj.opts.get_all_supp();
+            %region of validity [0, T] times X for dynamics (or X^2)
+            if obj.opts.DISCRETE_TIME
+                Xall = obj.opts.get_all_discrete(xt);                
+            else
+                Xall = obj.opts.get_all_supp();
+            end
             
             
             %the original constraint is that Lie v <= 0
@@ -150,6 +183,7 @@ classdef location_sos_interface < handle
 
             %lie derivative with no uncertainty
             dvdx = jacobian(v, x);                        
+
             
             if ~isempty(obj.opts.w)
                 %do not perform polytopic decomposition of w
@@ -167,7 +201,11 @@ classdef location_sos_interface < handle
                 %Assume time-dependent for now
                 %TODO: fix this (and in the next section
                 %'isempty(obj.opts.fw)'
-                Lv0 = dvdx*(scale_weight*F) + jacobian(v, t);
+                if obj.opts.DISCRETE_TIME
+                    Lv0 = replace(v, x, F) - v;
+                else
+                    Lv0 = dvdx*(scale_weight*F) + jacobian(v, t);
+                end
                 
                 [cons_lie, coeff_lie] =  obj.make_psatz(d, XF, poly.alpha-Lv0, [t;x;w]);
 %                 constraint_psatz(-Lv0, Xall, [t;x], d);
@@ -178,7 +216,11 @@ classdef location_sos_interface < handle
                 %perform polytopic decomposition of w
             if isempty(obj.opts.fw)
                 %no uncertainty at all in dynamics
-                Lv0 = dvdx*(scale_weight*obj.opts.f0) + jacobian(v, t);
+                if obj.opts.DISCRETE_TIME
+                    Lv0 = replace(v, x, F) - v;
+                else
+                    Lv0 = dvdx*(scale_weight*F) + jacobian(v, t);
+                end
                 [cons_lie, coeff_lie] =  obj.make_psatz(d, Xall, poly.alpha-Lv0, [t;x]);
 %                 constraint_psatz(-Lv0, Xall, [t;x], d);
                 cons_lie = cons_lie:'Lie standard (no input)';
@@ -186,6 +228,7 @@ classdef location_sos_interface < handle
                 nonneg_lie = -Lv0;
             else
                 %there is uncertainty
+                %this is the tricky part
                
                 
                 %uncertainty constraint Aw <= b
@@ -200,17 +243,23 @@ classdef location_sos_interface < handle
                     cons_lie = [];
                     nonneg_lie = [];
                 else
-                    
-                    Lv0 = dvdx*(scale_weight*obj.opts.f0);
-                    if ~obj.opts.TIME_INDEP
-                        Lv0 = Lv0 + jacobian(v, t);
+                    if obj.opts.DISCRETE_TIME
+                        Lv0 = replace(v, x, xt) - v;
+                        muterm = sum(mu .* (xt - obj.opts.f0));
+                    else
+                        Lv0 = dvdx*(scale_weight*obj.opts.f0);
+                        if ~obj.opts.TIME_INDEP
+                            Lv0 = Lv0 + jacobian(v, t);
+                        end
+                        muterm = 0;
+                          % for i = 1:length(x)
+                            % muterm = muterm + mu(i)*(x(i) - obj.opts.)
+                        % end
                     end
-%                       %Aw >= b
-%                     [consf0, coefff0] =  obj.make_psatz(d, Xall, Lv0-b'*zeta, [t;x]);
 
                     %Aw <= b
 %                     [consf0, coefff0] =  obj.make_psatz(d, Xall, Lv0+b'*zeta, [t;x]);
-                    [consf0, coefff0] =  obj.make_psatz(d, Xall, poly.alpha-Lv0-b'*zeta, [t;x]);
+                    [consf0, coefff0] =  obj.make_psatz(d, Xall, poly.alpha-Lv0-b'*zeta-muterm, [t;x;xt]);
 
                     %alpha: useful for time-independent uncertainty in
                     %finite time
@@ -225,7 +274,11 @@ classdef location_sos_interface < handle
                 %TODO: implement sparsity
                 for j = 1:num_input
                     %current dynamics
-                    Lvj = dvdx*(scale_weight*obj.opts.fw(:, j));
+                    if obj.opts.DISCRETE_TIME
+                        Lvj = sum(mu .* obj.opts.fw(:, j));
+                    else
+                        Lvj = dvdx*(scale_weight*obj.opts.fw(:, j));
+                    end
 
                     %current linear constraint
                     Aj = A(:, j);
@@ -236,11 +289,9 @@ classdef location_sos_interface < handle
                     
                     %Aw <= b
                     equal_j = Lvj - Aj'*zeta;      
-                    cons_equal = (coefficients(equal_j, [t; x]) == 0);
+                    cons_equal = (coefficients(equal_j, [t; x; xt]) == 0);
                     cons_lie = [cons_lie; cons_equal:['Lie input ', num2str(j), ' duality']];
                 end
-
-
 
                 %sos constraints on zeta
                 %zeta are >=0 over the dynamics support region Xall 
@@ -248,7 +299,7 @@ classdef location_sos_interface < handle
                     zeta_curr = zeta(j);
                     d_zeta = degree(zeta_curr);
                     
-                    [conszeta, coeffzeta] =  obj.make_psatz(d_zeta, Xall, zeta_curr, [t;x]);
+                    [conszeta, coeffzeta] =  obj.make_psatz(d_zeta, Xall, zeta_curr, [t;x; xt]);
 %                     [pzeta, conszeta, coeffzeta] = constraint_psatz(zeta_curr, Xall, [t;x], d_zeta);
 
                     coeff_lie = [coeff_lie; coeffzeta];
@@ -259,7 +310,7 @@ classdef location_sos_interface < handle
             end
             
             %time-independent alpha
-            if ~isnumeric(poly.alpha)
+            if obj.opts.TIME_INDEP || obj.opts.DISCRETE_TIME
                 cons_lie = [cons_lie; [poly.alpha>=0]:'Time Indep. alpha'];
             end
             
