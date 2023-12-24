@@ -1,7 +1,7 @@
 %plot system trajectories for quadratic rotating system
 
 PROBLEM = 1;
-SOLVE = 1;
+SOLVE = 0;
 SAMPLE_TRUE = 0;
 SAMPLE = 1;
 PLOT = 1;
@@ -81,7 +81,7 @@ if SOLVE
         %point initial set
     % order = 1; %sqrt(8)
     % order = 2; %sqrt(8)
-    order = 3; %1.1992365
+    order = 3; %1.1254
     % order = 4;  
 
     d = 2*order;
@@ -117,6 +117,7 @@ if SAMPLE_TRUE
 end
 
 
+%% sample noisy data
 if SAMPLE
     
     s_opt = sampler_options;
@@ -132,7 +133,7 @@ if SAMPLE
     s_opt.sample.d = w_handle;
     s_opt.parallel = 0;
 
-    Nsample_traj = 100;
+    Nsample_traj = 500;
 
     p0 = polyval_func(model.f0, x); 
     pw = polyval_func(model.fw, x); 
@@ -148,6 +149,7 @@ if SAMPLE
 
 end
 
+%% plot the result
 if PLOT
     PS_true = peak_sos_plotter(out, out_sim_true);
     PS = peak_sos_plotter(out, out_sim);
@@ -160,7 +162,15 @@ if PLOT
         plot(R0*cos(theta)+C0(1), R0*sin(theta)+C0(2), 'color', 'k', 'LineWidth', 3);
     end
 
+    if SOLVE
+        plot(xlim, -out.obj*[1,1], '--r', 'LineWidth', 3)
+        xlim([-2, 2])
+        ylim([-2, 2])
+        pbaspect([diff(xlim), diff(ylim), 1])
+    end
+
         DG.data_plot_2_discrete(observed, epsilon);
+
 
 
 end
