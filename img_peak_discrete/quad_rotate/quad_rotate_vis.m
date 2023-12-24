@@ -1,7 +1,7 @@
 %plot system trajectories for quadratic rotating system
 
 PROBLEM = 1;
-SOLVE = 0;
+SOLVE = 1;
 SAMPLE_TRUE = 0;
 SAMPLE = 1;
 PLOT = 1;
@@ -79,10 +79,10 @@ if SOLVE
 
 
         %point initial set
-    % order = 1; %sqrt(8)
-    % order = 2; %sqrt(8)
-    order = 3; %1.1254
-    % order = 4;  
+    % order = 1; %2
+    % order = 2; %1.7221
+    % order = 3; %1.1254
+    order = 4;  
 
     d = 2*order;
 
@@ -105,7 +105,8 @@ if SAMPLE_TRUE
     end
 
     s_opt.parallel = 0;
-    Nsample_traj = 400;
+    % Nsample_traj = 400;
+    Nsample_traj = 50;
 
     dynamics_true = struct('f', {@(t, x, w, d, b) f_true(t, x)}, 'discrete', 1, 'cost', @(x) -x(2));
 
