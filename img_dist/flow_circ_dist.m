@@ -3,9 +3,9 @@
 %break up the sections here into functions
 
 PROBLEM = 1;
-SOLVE = 0;
-SAMPLE = 1;
-PLOT = 1;
+SOLVE = 1;
+SAMPLE = 0;
+PLOT = 0;
 
 if PROBLEM
 rng(33, 'twister')
@@ -131,9 +131,9 @@ Ru = 0.5;
     %% start up tester
     PM = dist_sos(lsupp);
 
-    order = 5;
+%     order = 5;
 %     order = 4;
-% order=3; %
+order=3; %
 %     order = 2; % 
 %     order = 1;
     d = 2*order;
